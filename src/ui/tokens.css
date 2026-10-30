@@ -1,0 +1,52 @@
+:root {
+  --ink: #e8e4d8;
+  --muted: #9aa6a0;
+  --paper: #243038;
+  --plate: #1f2a32;
+  --slot: #162026;
+  --stroke: #3d4d56;
+  --stroke-deep: #0c1216;
+  --accent: #c9a45a;
+  --accent-deep: #8a6a2e;
+  --brass: #d4b06a;
+  --danger: #d45a4a;
+  --moss: #5a8a6a;
+  --shadow: rgba(8, 12, 14, 0.55);
+  --radius: 14px;
+  --radius-card: 16px;
+  --border: 2px;
+  --motion: 180ms;
+  --font-display: 'Songti SC', 'STSong', 'Noto Serif SC', serif;
+  --font-body: 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', monospace;
+  --z-hud: 4;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  height: 100%;
+  min-height: 100%;
+}
+
+#app {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at 18% -8%, rgba(80, 110, 90, 0.28), transparent 48%),
+    radial-gradient(ellipse at 88% 110%, rgba(40, 56, 48, 0.5), transparent 44%),
+    linear-gradient(180deg, #1b2830 0%, #12181c 46%, #0c1216 100%);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion: 0.01ms;
+  }
+}
