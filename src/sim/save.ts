@@ -350,6 +350,9 @@ export function createMemoryStorage(initial?: Record<string, string>): StorageLi
     setItem(key, value) {
       mem.set(key, value)
     },
+    removeItem(key) {
+      mem.delete(key)
+    },
   }
 }
 
@@ -374,4 +377,26 @@ export function loadGame(storage: StorageLike = defaultStorage(), now = Date.now
 
 export function saveGame(state: GameState, storage: StorageLike = defaultStorage(), now = Date.now()): void {
   storage.setItem(SAVE_KEY, JSON.stringify(serialize(state, now)))
+}
+
+/** 只删游戏存档键。prefs / 主屏 / 更新气泡等独立键不要走这里。 */
+export function clearGameSave(storage: StorageLike = defaultStorage()): void {
+  storage.removeItem(SAVE_KEY)
+}
+
+export function cloneGameState(state: GameState): GameState {
+  const loaded = deserialize(serialize(state, 0))
+  if (!loaded) return createInitialState()
+  return loaded.state
+}
+
+export function assignGameState(target: GameState, source: GameState): void {
+  const next = cloneGameState(source)
+  target.units = next.units
+  target.beds = next.beds
+  target.queue = next.queue
+  target.potionCount = next.potionCount
+  target.supply = next.supply
+  target.nextUnitId = next.nextUnitId
+  target.restaurant = next.restaurant
 }

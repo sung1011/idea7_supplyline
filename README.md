@@ -24,4 +24,4 @@ npm run build
 npm test
 ```
 
-开发页默认 http://localhost:5173/idea7_supplyline/ 。存档写在 `localStorage`，键名 **`idea7Supplyline`**。
+开发页默认 http://localhost:5173/idea7_supplyline/ 。存档写在 `localStorage`，键名 **`idea7Supplyline`**。右上角齿轮打开设置（统计 / 常规 / 版本 / GM）。音乐音效 prefs 键 **`idea7SupplylineSettings`**，初始化存档不会删它。

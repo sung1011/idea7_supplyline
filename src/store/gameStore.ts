@@ -16,6 +16,14 @@ import {
   tick,
 } from '../sim/game'
 import {
+  gmAddPotion,
+  gmAddShelfEach,
+  gmAddSupply,
+  gmGrantCoarse,
+  gmRecallAll,
+  gmResetState,
+} from '../sim/gm'
+import {
   boostChefWeight,
   cookByChefPreference,
   cookIngredient,
@@ -23,7 +31,8 @@ import {
   mergeIngredients,
   reservedOrderCounts,
 } from '../sim/kitchen'
-import { loadGame, saveGame } from '../sim/save'
+import { clearGameSave, loadGame, saveGame } from '../sim/save'
+import { pushFloatTip } from '../ui/floatTips'
 import type { DishKind, Unit } from '../sim/types'
 
 export type MainTab = 'camp' | 'hospital' | 'restaurant'
@@ -129,6 +138,20 @@ export const useGameStore = defineStore('game', () => {
     persist()
   }
 
+  function gmReset(): void {
+    clearGameSave()
+    gmResetState(game)
+    tab.value = 'camp'
+    persist()
+    pushFloatTip('已初始化', 'ok')
+  }
+
+  function runGm(fn: () => void, okText?: string): void {
+    fn()
+    persist()
+    if (okText) pushFloatTip(okText, 'ok')
+  }
+
   let lastTs = Date.now()
   let raf = 0
   let persistTimer = 0
@@ -208,6 +231,16 @@ export const useGameStore = defineStore('game', () => {
     cookPreferred,
     giveCoarse,
     preferDish,
+    gmReset,
+    gmAddSupply: () => runGm(() => gmAddSupply(game), '补给 +50'),
+    gmAddPotion: () => runGm(() => gmAddPotion(game), '药剂 +5'),
+    gmAddShelf: () => runGm(() => gmAddShelfEach(game), '货架各 +5'),
+    gmRecallAll: () => runGm(() => gmRecallAll(game), '全员回营'),
+    gmGrantCoarse: () => {
+      const granted = gmGrantCoarse(game)
+      persist()
+      pushFloatTip(granted > 0 ? `粗料 +${granted}` : '材料栏已满', granted > 0 ? 'ok' : 'err')
+    },
     persist,
     startClock,
     stopClock,

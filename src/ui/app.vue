@@ -1,22 +1,41 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { APP_VERSION } from '../generated/appVersion'
 import { GAME_NAME } from '../sim/placeholder'
 import { useGameStore } from '../store/gameStore'
+import { startAddToHomeWatch } from './addToHomeState'
+import AppUpdateBubble from './appUpdateBubble.vue'
+import {
+  dismissUpdateBubble,
+  refreshToNewVersion,
+  startAppUpdateSchedule,
+  updateBubble,
+  updateReady,
+} from './appUpdateState'
 import CampPage from './campPage.vue'
+import FloatTips from './floatTips.vue'
 import HospitalPage from './hospitalPage.vue'
 import RestaurantPage from './restaurantPage.vue'
+import SettingsPanel from './settingsPanel.vue'
 
 const store = useGameStore()
 const { tab, game } = storeToRefs(store)
+const settingsOpen = ref(false)
+const settingsBtn = ref<HTMLButtonElement | null>(null)
+let stopAppUpdate: (() => void) | null = null
+let stopAddToHome: (() => void) | null = null
 
 onMounted(() => {
   store.startClock()
+  stopAppUpdate = startAppUpdateSchedule()
+  stopAddToHome = startAddToHomeWatch()
 })
 
 onUnmounted(() => {
   store.stopClock()
+  stopAppUpdate?.()
+  stopAddToHome?.()
 })
 </script>
 
@@ -27,9 +46,27 @@ onUnmounted(() => {
         <p class="mark">{{ GAME_NAME }}</p>
         <p class="ver">{{ APP_VERSION.version }}</p>
       </div>
-      <div class="res" aria-label="资源">
-        <span class="pill supply" title="补给">📦 {{ Math.floor(game.supply) }}</span>
-        <span class="pill potion" title="药剂">💊 {{ Math.floor(game.potionCount) }}</span>
+      <div class="hud-right">
+        <div class="res" aria-label="资源">
+          <span class="pill supply" title="补给">📦 {{ Math.floor(game.supply) }}</span>
+          <span class="pill potion" title="药剂">💊 {{ Math.floor(game.potionCount) }}</span>
+        </div>
+        <button
+          ref="settingsBtn"
+          type="button"
+          class="gear"
+          :class="{ unread: updateReady }"
+          :aria-label="updateReady ? '设置，有新版本' : '设置'"
+          @click="settingsOpen = true"
+        >
+          <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M19.1 12.7a7.4 7.4 0 0 0 .1-1.4 7.4 7.4 0 0 0-.1-1.4l2-1.6a.5.5 0 0 0 .1-.6l-1.9-3.3a.5.5 0 0 0-.6-.2l-2.4 1a7 7 0 0 0-2.4-1.4l-.4-2.5a.5.5 0 0 0-.5-.4h-3.8a.5.5 0 0 0-.5.4l-.4 2.5a7 7 0 0 0-2.4 1.4l-2.4-1a.5.5 0 0 0-.6.2L2.7 7.7a.5.5 0 0 0 .1.6l2 1.6a7.4 7.4 0 0 0-.1 1.4 7.4 7.4 0 0 0 .1 1.4l-2 1.6a.5.5 0 0 0-.1.6l1.9 3.3a.5.5 0 0 0 .6.2l2.4-1a7 7 0 0 0 2.4 1.4l.4 2.5a.5.5 0 0 0 .5.4h3.8a.5.5 0 0 0 .5-.4l.4-2.5a7 7 0 0 0 2.4-1.4l2.4 1a.5.5 0 0 0 .6-.2l1.9-3.3a.5.5 0 0 0-.1-.6Zm-7.1 2.1A2.8 2.8 0 1 1 14.8 12 2.8 2.8 0 0 1 12 14.8Z"
+            />
+          </svg>
+          <i v-if="updateReady" class="dot" />
+        </button>
       </div>
     </header>
 
@@ -71,6 +108,18 @@ onUnmounted(() => {
         餐厅
       </button>
     </nav>
+
+    <AppUpdateBubble
+      v-if="updateBubble && !settingsOpen"
+      :version="updateBubble.version"
+      :lines="updateBubble.lines"
+      :gap="updateBubble.gap"
+      :anchor="settingsBtn"
+      @close="dismissUpdateBubble"
+      @refresh="refreshToNewVersion"
+    />
+    <SettingsPanel v-if="settingsOpen" @close="settingsOpen = false" />
+    <FloatTips />
   </div>
 </template>
 
@@ -128,6 +177,12 @@ onUnmounted(() => {
   font-size: 11px;
 }
 
+.hud-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .res {
   display: flex;
   gap: 6px;
@@ -144,6 +199,38 @@ onUnmounted(() => {
   box-shadow: 0 3px 0 var(--stroke-deep);
   font-size: 14px;
   font-weight: 800;
+}
+
+.gear {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 3px solid var(--stroke);
+  border-radius: 50%;
+  background: #fff8dc;
+  box-shadow: 0 3px 0 var(--stroke-deep);
+  color: var(--ink);
+}
+
+.gear .glyph {
+  width: 18px;
+  height: 18px;
+}
+
+.dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  box-shadow: 0 0 0 2px #fff8dc;
 }
 
 .page {

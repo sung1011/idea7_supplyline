@@ -29,6 +29,9 @@
   --font-body: 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   --font-mono: ui-monospace, 'SFMono-Regular', monospace;
   --z-hud: 4;
+  --z-settings: 20;
+  --z-confirm: 30;
+  --z-tips: 40;
 }
 
 html,
