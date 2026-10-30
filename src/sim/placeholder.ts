@@ -1,3 +1,2 @@
-/** 补给线模拟层占位。医院 / 餐厅玩法尚未落地。 */
-export const GAME_NAME = '补给线'
-export const GAME_TAGLINE = '为前线战士做后勤补给。'
+/** 补给线模拟层对外名称。玩法逻辑见 game.ts。 */
+export { GAME_NAME, GAME_TAGLINE } from './config'

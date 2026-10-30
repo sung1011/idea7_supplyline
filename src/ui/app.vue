@@ -1,19 +1,69 @@
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
+import { onMounted, onUnmounted } from 'vue'
 import { APP_VERSION } from '../generated/appVersion'
-import { GAME_NAME, GAME_TAGLINE } from '../sim/placeholder'
+import { GAME_NAME } from '../sim/placeholder'
+import { useGameStore } from '../store/gameStore'
+import CampPage from './campPage.vue'
+import HospitalPage from './hospitalPage.vue'
+
+const store = useGameStore()
+const { tab, game } = storeToRefs(store)
+
+onMounted(() => {
+  store.startClock()
+})
+
+onUnmounted(() => {
+  store.stopClock()
+})
 </script>
 
 <template>
-  <div class="shell">
+  <div class="shell" :class="tab">
     <header class="hud">
-      <p class="mark">后勤</p>
-      <p class="ver">{{ APP_VERSION.version }}</p>
+      <div class="brand">
+        <p class="mark">{{ GAME_NAME }}</p>
+        <p class="ver">{{ APP_VERSION.version }}</p>
+      </div>
+      <div class="res" aria-label="资源">
+        <span class="pill supply" title="补给">📦 {{ Math.floor(game.supply) }}</span>
+        <span class="pill potion" title="药剂">💊 {{ Math.floor(game.potionCount) }}</span>
+      </div>
     </header>
+
     <main class="page">
-      <h1 class="title">{{ GAME_NAME }}</h1>
-      <p class="lead">{{ GAME_TAGLINE }}</p>
-      <p class="note">医院收治伤员，餐厅供应伙食。玩法尚未落地，当前只是竖屏骨架。</p>
+      <CampPage v-if="tab === 'camp'" />
+      <HospitalPage v-else />
     </main>
+
+    <nav class="tabs" aria-label="区域">
+      <button
+        type="button"
+        class="tab"
+        :class="{ on: tab === 'camp' }"
+        :aria-current="tab === 'camp' ? 'page' : undefined"
+        @click="tab = 'camp'"
+      >
+        <span aria-hidden="true">🏕️</span>
+        营地
+      </button>
+      <button
+        type="button"
+        class="tab"
+        :class="{ on: tab === 'hospital' }"
+        :aria-current="tab === 'hospital' ? 'page' : undefined"
+        @click="tab = 'hospital'"
+      >
+        <span aria-hidden="true">🏥</span>
+        医院
+      </button>
+      <button type="button" class="tab locked" disabled>
+        <span aria-hidden="true">🍽️</span>
+        餐厅
+        <small>未开放</small>
+      </button>
+    </nav>
   </div>
 </template>
 
@@ -28,10 +78,12 @@ import { GAME_NAME, GAME_TAGLINE } from '../sim/placeholder'
   margin: 0 auto;
   overflow: hidden;
   padding-top: env(safe-area-inset-top);
-  background:
-    linear-gradient(180deg, rgba(27, 40, 48, 0.35), transparent 28%),
-    linear-gradient(180deg, #162026 0%, #12181c 100%);
-  box-shadow: 0 0 0 1px var(--stroke-deep);
+  background: linear-gradient(180deg, #b8f07a 0%, #6fcf4a 42%, #4eae36 100%);
+  box-shadow: 0 0 0 3px var(--stroke-deep);
+}
+
+.shell.hospital {
+  background: linear-gradient(180deg, #ffe4df 0%, #ff9b8f 46%, #ef6b62 100%);
 }
 
 .hud {
@@ -39,54 +91,102 @@ import { GAME_NAME, GAME_TAGLINE } from '../sim/placeholder'
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 12px 16px 8px;
+  padding: 12px 14px 8px;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .mark,
 .ver {
   margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  letter-spacing: 0.16em;
+}
+
+.mark {
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 900;
 }
 
 .ver {
+  color: var(--muted);
   font-family: var(--font-mono);
-  letter-spacing: 0.04em;
+  font-size: 11px;
+}
+
+.res {
+  display: flex;
+  gap: 6px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 4px 10px;
+  border: 3px solid var(--stroke);
+  border-radius: 999px;
+  background: #fff8dc;
+  box-shadow: 0 3px 0 var(--stroke-deep);
+  font-size: 14px;
+  font-weight: 800;
 }
 
 .page {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   flex: 1 1 auto;
   min-height: 0;
-  padding: 24px 28px calc(32px + env(safe-area-inset-bottom));
+  padding: 8px 14px 12px;
+  overflow: auto;
 }
 
-.title {
-  margin: 0 0 12px;
-  color: var(--brass);
-  font-family: var(--font-display);
-  font-size: 36px;
-  font-weight: 400;
-  letter-spacing: 0.22em;
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+  border-top: 3px solid var(--stroke);
+  background: #ffe9a0;
 }
 
-.lead,
-.note {
-  margin: 0;
-  line-height: 1.7;
-}
-
-.lead {
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 64px;
+  padding: 6px 4px;
+  border: 3px solid var(--stroke);
+  border-radius: 16px;
+  background: #fff8dc;
+  box-shadow: 0 4px 0 var(--stroke-deep);
   color: var(--ink);
-  font-size: 16px;
+  font-size: 14px;
+  font-weight: 900;
 }
 
-.note {
-  margin-top: 16px;
-  color: var(--muted);
-  font-size: 13px;
+.tab span {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.tab.on {
+  background: linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
+}
+
+.tab.locked {
+  background: #d8d2c6;
+  box-shadow: 0 4px 0 #8c8678;
+  color: #6b665c;
+}
+
+.tab small {
+  font-size: 10px;
+  font-weight: 800;
 }
 </style>
