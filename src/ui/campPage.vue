@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '../store/gameStore'
+import CrIcon from './crIcon.vue'
 import HpBar from './hpBar.vue'
 import StaminaBar from './staminaBar.vue'
+import UnitFace from './unitFace.vue'
 
 const store = useGameStore()
 const { campUnits, injureReady, starveReady } = storeToRefs(store)
@@ -10,26 +12,31 @@ const { campUnits, injureReady, starveReady } = storeToRefs(store)
 
 <template>
   <section class="camp" aria-label="营地">
-    <header class="head">
-      <h2>🏕️ 营地待命</h2>
-      <p>满血可送医院，满体力可送餐厅。补给完成的人会回到这里。</p>
-    </header>
-    <ul v-if="campUnits.length" class="list">
-      <li v-for="unit in campUnits" :key="unit.id" class="card">
-        <div class="who">
-          <span class="emoji" aria-hidden="true">🛡️</span>
-          <strong>{{ unit.name }}</strong>
+    <div class="cr-board">
+      <header class="scene-head">
+        <span class="scene-mark camp-mark"><CrIcon name="tent" /></span>
+        <div>
+          <h2 class="camp-ink">营地待命</h2>
+          <p class="camp-mute">满血可送医院，满体力可送餐厅。补给完成的人会回到这里。</p>
         </div>
-        <HpBar :hp="unit.hp" :max-hp="unit.maxHp" />
-        <StaminaBar :stamina="unit.stamina" :max-stamina="unit.maxStamina" />
-      </li>
-    </ul>
-    <p v-else class="empty">营地点名空空，人都在医院或餐厅。</p>
+      </header>
+      <ul v-if="campUnits.length" class="list">
+        <li v-for="unit in campUnits" :key="unit.id" class="card">
+          <UnitFace :name="unit.name" />
+          <div class="meta">
+            <strong>{{ unit.name }}</strong>
+            <HpBar :hp="unit.hp" :max-hp="unit.maxHp" />
+            <StaminaBar :stamina="unit.stamina" :max-stamina="unit.maxStamina" />
+          </div>
+        </li>
+      </ul>
+      <p v-else class="empty">营地点名空空，人都在医院或餐厅。</p>
+    </div>
     <div class="actions">
-      <button class="action" type="button" :disabled="!injureReady" @click="store.sendInjured()">
+      <button class="cr-btn gold" type="button" :disabled="!injureReady" @click="store.sendInjured()">
         造伤送医
       </button>
-      <button class="action hungry" type="button" :disabled="!starveReady" @click="store.sendHungry()">
+      <button class="cr-btn orange" type="button" :disabled="!starveReady" @click="store.sendHungry()">
         饿了送餐
       </button>
     </div>
@@ -40,26 +47,26 @@ const { campUnits, injureReady, starveReady } = storeToRefs(store)
 .camp {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   min-height: 0;
 }
 
-.head h2,
-.head p {
-  margin: 0;
+.camp :deep(.cr-board) {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
 }
 
-.head h2 {
-  color: #1f5d22;
-  font-size: 22px;
-  font-weight: 900;
+.camp-mark {
+  background: #e8ffc8;
 }
 
-.head p {
-  margin-top: 6px;
+.camp-ink {
+  color: var(--camp-ink);
+}
+
+.camp-mute {
   color: #3d6b32;
-  font-size: 13px;
-  line-height: 1.5;
 }
 
 .list {
@@ -73,33 +80,31 @@ const { campUnits, injureReady, starveReady } = storeToRefs(store)
 
 .card {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px;
-  border: 3px solid var(--stroke);
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: var(--border) solid var(--stroke);
   border-radius: var(--radius-card);
   background: linear-gradient(180deg, #fffdf2 0%, #e8ffc8 100%);
   box-shadow: 0 4px 0 var(--camp-deep);
 }
 
-.who {
+.meta {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 
-.emoji {
-  font-size: 22px;
-}
-
-.who strong {
+.meta strong {
   font-size: 17px;
 }
 
 .empty {
   margin: 0;
   padding: 18px;
-  border: 3px dashed var(--camp-deep);
+  border: 4px dashed var(--camp-deep);
   border-radius: var(--radius-card);
   background: rgba(255, 255, 255, 0.45);
   color: #3d6b32;
@@ -110,28 +115,7 @@ const { campUnits, injureReady, starveReady } = storeToRefs(store)
 .actions {
   display: flex;
   flex-direction: column;
+  flex: 0 0 auto;
   gap: 10px;
-}
-
-.action {
-  padding: 14px 16px;
-  border: 3px solid var(--stroke);
-  border-radius: 18px;
-  background: linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
-  color: var(--ink);
-  font-size: 18px;
-  font-weight: 900;
-  box-shadow: 0 5px 0 #c97800;
-}
-
-.action.hungry {
-  background: linear-gradient(180deg, #ffd36a 0%, #f08a20 100%);
-  box-shadow: 0 5px 0 #c45c00;
-}
-
-.action:disabled {
-  background: #d5d0c4;
-  box-shadow: 0 5px 0 #8c8678;
-  color: #6b665c;
 }
 </style>

@@ -2,10 +2,18 @@ import type { AppVersionInfo } from '../ui/appVersion'
 
 /** 构建脚本写入，勿手改。 */
 export const APP_VERSION: AppVersionInfo = {
-  "version": "a373dd2",
-  "sha": "a373dd21a6815dced2252c2f2d0c17ecfd390596",
-  "releasedAt": "2026-10-30T16:25:20+00:00",
+  "version": "8c93f2c",
+  "sha": "8c93f2cddf4ba7f42421d187a14c3a20ca789de2",
+  "releasedAt": "2026-10-30T17:33:58+00:00",
   "notes": [
+    {
+      "at": "2026-10-30T17:33:58+00:00",
+      "title": "美术：CR极卡通CSS与内联SVG壳"
+    },
+    {
+      "at": "2026-10-30T16:35:09+00:00",
+      "title": "设置：齿轮面板加主屏检查更新与GM"
+    },
     {
       "at": "2026-10-30T16:25:20+00:00",
       "title": "后厨：两两merge出菜与厨师偏好"

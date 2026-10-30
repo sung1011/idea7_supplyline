@@ -22,16 +22,17 @@ defineProps<{
 .hp {
   position: relative;
   overflow: hidden;
-  height: 22px;
-  border: 3px solid var(--stroke);
+  height: 26px;
+  border: 4px solid var(--stroke);
   border-radius: 999px;
   background: #fff7e6;
-  box-shadow: 0 3px 0 var(--stroke-deep);
+  box-shadow: 0 4px 0 var(--stroke-deep);
 }
 
 .fill {
   height: 100%;
-  background: linear-gradient(180deg, #8dff6a 0%, #3ecf3a 70%, #2aaa28 100%);
+  background: linear-gradient(180deg, #b6ff7a 0%, #3ecf3a 58%, #1f9a28 100%);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.35), inset 0 -3px 0 rgba(0, 0, 0, 0.18);
 }
 
 .label {

@@ -319,10 +319,10 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 10px;
   padding: 12px 12px 10px;
-  border: 3px solid var(--stroke);
+  border: var(--border) solid var(--stroke);
   border-radius: var(--radius-card);
   background: linear-gradient(180deg, #fffdf2 0%, #ffe9a8 100%);
-  box-shadow: 0 4px 0 var(--stroke-deep);
+  box-shadow: 0 var(--lift) 0 var(--stroke-deep);
 }
 
 .title {
@@ -350,10 +350,10 @@ header .title,
 }
 
 .box button {
-  border: 3px solid var(--stroke);
+  border: var(--border) solid var(--stroke);
   border-radius: 14px;
   background: linear-gradient(180deg, #fff8dc 0%, #ffe56a 100%);
-  box-shadow: 0 3px 0 var(--stroke-deep);
+  box-shadow: 0 var(--lift) 0 var(--stroke-deep);
   color: var(--ink);
   font-weight: 800;
 }
@@ -487,7 +487,7 @@ header .title,
   align-items: center;
   gap: 10px;
   padding: 10px;
-  border: 3px solid var(--stroke);
+  border: var(--border) solid var(--stroke);
   border-radius: var(--radius);
   background: #fffdf2;
 }
@@ -613,10 +613,10 @@ header .title,
   flex-direction: column;
   gap: 10px;
   padding: 12px;
-  border: 3px solid var(--stroke);
+  border: var(--border) solid var(--stroke);
   border-radius: var(--radius-card);
   background: var(--plate);
-  box-shadow: 0 3px 0 var(--stroke-deep);
+  box-shadow: 0 var(--lift) 0 var(--stroke-deep);
 }
 
 .ask p {
@@ -633,10 +633,10 @@ header .title,
 .ask-actions button {
   width: 100%;
   min-height: 40px;
-  border: 3px solid var(--stroke);
+  border: var(--border) solid var(--stroke);
   border-radius: 14px;
   background: linear-gradient(180deg, #fff8dc 0%, #ffe56a 100%);
-  box-shadow: 0 3px 0 var(--stroke-deep);
+  box-shadow: 0 var(--lift) 0 var(--stroke-deep);
   color: var(--ink);
   font-weight: 800;
 }
@@ -653,7 +653,7 @@ header .title,
   flex-direction: column;
   gap: 8px;
   padding: 10px;
-  border: 3px solid var(--stroke);
+  border: var(--border) solid var(--stroke);
   border-radius: var(--radius);
   background: var(--slot);
 }

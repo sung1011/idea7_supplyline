@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import {
-  DISH_EMOJI,
-  DISH_KINDS,
-  KITCHEN_SLOT_MAX,
-  QUALITY_STAR_COUNT,
-} from '../sim/config'
+import { DISH_KINDS, KITCHEN_SLOT_MAX, QUALITY_STAR_COUNT } from '../sim/config'
 import { canCookIngredient, canGrantCoarse, canMerge } from '../sim/kitchen'
 import { useGameStore } from '../store/gameStore'
 import type { Ingredient, IngredientQuality } from '../sim/types'
+import CrIcon from './crIcon.vue'
+import DishMark from './dishMark.vue'
 
 const store = useGameStore()
 const { game } = storeToRefs(store)
@@ -41,8 +38,8 @@ const cookReady = computed(() => {
 const grantReady = computed(() => canGrantCoarse(store.game))
 const preferCookReady = computed(() => game.value.restaurant.kitchen.length > 0)
 
-function stars(quality: IngredientQuality): string {
-  return '★'.repeat(QUALITY_STAR_COUNT[quality])
+function starCount(quality: IngredientQuality): number {
+  return QUALITY_STAR_COUNT[quality] + 1
 }
 
 function qualityClass(quality: IngredientQuality): string {
@@ -84,9 +81,12 @@ function doPreferCook(): void {
 
 <template>
   <section class="kitchen" aria-label="后厨">
-    <header class="head">
-      <h3>🍳 后厨</h3>
-      <p>点选同档两件 merge，或点一件做成菜进货架。不消耗货架成品。</p>
+    <header class="scene-head">
+      <span class="scene-mark rest-mark"><CrIcon name="crate" /></span>
+      <div>
+        <h3 class="rest-ink">后厨</h3>
+        <p class="rest-mute">点选同档两件 merge，或点一件做成菜进货架。不消耗货架成品。</p>
+      </div>
     </header>
 
     <p class="count">材料 {{ game.restaurant.kitchen.length }}/{{ KITCHEN_SLOT_MAX }}</p>
@@ -99,20 +99,20 @@ function doPreferCook(): void {
           :class="[qualityClass(item.quality), { on: selected.includes(item.id) }]"
           @click="toggleSlot(item.id)"
         >
-          <span class="emoji">{{ DISH_EMOJI[item.kind] }}</span>
+          <DishMark :kind="item.kind" :stars="starCount(item.quality)" />
           <strong>{{ item.kind }}</strong>
-          <small>{{ item.quality }}{{ stars(item.quality) }}</small>
+          <small>{{ item.quality }}</small>
         </button>
         <div v-else class="slot empty">空</div>
       </li>
     </ul>
 
     <div class="actions">
-      <button type="button" class="act merge" :disabled="!mergeReady" @click="doMerge">
+      <button type="button" class="cr-btn gold sm act" :disabled="!mergeReady" @click="doMerge">
         Merge
       </button>
-      <button type="button" class="act cook" :disabled="!cookReady" @click="doCook">做成菜</button>
-      <button type="button" class="act prefer" :disabled="!preferCookReady" @click="doPreferCook">
+      <button type="button" class="cr-btn gold sm act" :disabled="!cookReady" @click="doCook">做成菜</button>
+      <button type="button" class="cr-btn cream sm act" :disabled="!preferCookReady" @click="doPreferCook">
         按偏好做成菜
       </button>
     </div>
@@ -127,13 +127,14 @@ function doPreferCook(): void {
           class="bias-btn"
           @click="store.preferDish(kind)"
         >
-          {{ DISH_EMOJI[kind] }} {{ kind }}
+          <DishMark :kind="kind" />
+          {{ kind }}
           <strong>{{ game.restaurant.chefWeight[kind] }}</strong>
         </button>
       </div>
     </section>
 
-    <button type="button" class="grant" :disabled="!grantReady" @click="store.giveCoarse()">
+    <button type="button" class="cr-btn cream" :disabled="!grantReady" @click="store.giveCoarse()">
       发粗料
     </button>
   </section>
@@ -144,36 +145,35 @@ function doPreferCook(): void {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 12px;
-  border: 3px solid var(--stroke);
+  padding: 14px;
+  border: var(--border) solid var(--stroke);
   border-radius: var(--radius-card);
-  background: #fff6dc;
-  box-shadow: 0 4px 0 #d7b36a;
+  background: linear-gradient(180deg, #fffdf2 0%, #ffe9b8 100%);
+  box-shadow: 0 6px 0 var(--stroke-deep);
 }
 
-.head h3,
-.head p,
+.rest-mark {
+  background: #fff3c4;
+}
+
+.rest-ink,
 .bias h4,
 .count {
   margin: 0;
-}
-
-.head h3,
-.bias h4,
-.count {
-  color: #9a5a00;
+  color: var(--restaurant-ink);
   font-weight: 900;
 }
 
-.head h3 {
-  font-size: 16px;
+.rest-ink {
+  font-size: 18px;
 }
 
-.head p {
-  margin-top: 4px;
+.rest-mute {
+  margin: 4px 0 0;
   color: #a36a12;
   font-size: 12px;
   line-height: 1.45;
+  font-weight: 700;
 }
 
 .count {
@@ -182,7 +182,7 @@ function doPreferCook(): void {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   margin: 0;
   padding: 0;
@@ -195,15 +195,25 @@ function doPreferCook(): void {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  min-height: 78px;
+  min-height: 92px;
   width: 100%;
+  min-width: 0;
   padding: 6px 4px;
-  border: 3px solid var(--stroke);
-  border-radius: 14px;
+  border: var(--border) solid var(--stroke);
+  border-radius: 16px;
   background: linear-gradient(180deg, #fffdf2 0%, #ffe7a8 100%);
-  box-shadow: 0 3px 0 #c97800;
+  box-shadow: 0 var(--lift) 0 #c97800;
   color: var(--ink);
   font-weight: 800;
+}
+
+.slot :deep(.dish svg) {
+  width: 32px;
+  height: 32px;
+}
+
+.slot :deep(.stars) {
+  font-size: 9px;
 }
 
 .slot.coarse {
@@ -231,11 +241,6 @@ function doPreferCook(): void {
   font-size: 12px;
 }
 
-.emoji {
-  font-size: 18px;
-  line-height: 1;
-}
-
 .slot strong {
   font-size: 12px;
 }
@@ -252,34 +257,8 @@ function doPreferCook(): void {
   gap: 8px;
 }
 
-.act,
-.grant,
-.bias-btn {
-  border: 3px solid var(--stroke);
-  font-weight: 900;
-}
-
 .act {
   flex: 1 1 96px;
-  min-height: 44px;
-  padding: 8px 10px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
-  box-shadow: 0 3px 0 #c97800;
-  color: var(--ink);
-  font-size: 13px;
-}
-
-.act.prefer {
-  background: linear-gradient(180deg, #fff8dc 0%, #ffd36a 100%);
-  box-shadow: 0 3px 0 #c9a227;
-}
-
-.act:disabled,
-.grant:disabled {
-  background: #d5d0c4;
-  box-shadow: 0 3px 0 #8c8678;
-  color: #6b665c;
 }
 
 .bias h4 {
@@ -292,21 +271,23 @@ function doPreferCook(): void {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 40px;
+  gap: 4px;
+  min-height: 44px;
   padding: 6px 8px;
-  border-radius: 12px;
+  border: var(--border) solid var(--stroke);
+  border-radius: 14px;
   background: #fffdf2;
-  box-shadow: 0 3px 0 #d7b36a;
+  box-shadow: 0 var(--lift) 0 #d7b36a;
   font-size: 13px;
+  font-weight: 800;
 }
 
-.grant {
-  padding: 12px 16px;
-  border-radius: 16px;
-  background: linear-gradient(180deg, #fff8dc 0%, #ffd36a 100%);
-  box-shadow: 0 4px 0 #c9a227;
-  color: var(--ink);
-  font-size: 15px;
+.bias-btn :deep(.dish svg) {
+  width: 22px;
+  height: 22px;
+}
+
+.bias-btn :deep(.stars) {
+  display: none;
 }
 </style>

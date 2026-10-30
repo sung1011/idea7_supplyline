@@ -3,7 +3,9 @@ import { storeToRefs } from 'pinia'
 import { EXPAND_BED_COST } from '../sim/config'
 import { canApplyPotion } from '../sim/game'
 import { useGameStore } from '../store/gameStore'
+import CrIcon from './crIcon.vue'
 import HpBar from './hpBar.vue'
+import UnitFace from './unitFace.vue'
 
 const store = useGameStore()
 const { bedUnits, queueUnits, expandReady } = storeToRefs(store)
@@ -15,47 +17,59 @@ function potionReady(unitId: string): boolean {
 
 <template>
   <section class="hospital" aria-label="医院">
-    <header class="head">
-      <h2>🏥 医院</h2>
-      <p>占床才回血，没床排队。药剂 ×3，扩床花补给。</p>
-    </header>
+    <div class="cr-board">
+      <header class="scene-head">
+        <span class="scene-mark hosp-mark"><CrIcon name="cross" /></span>
+        <div>
+          <h2 class="hosp-ink">医院</h2>
+          <p class="hosp-mute">占床才回血，没床排队。药剂 ×3，扩床花补给。</p>
+        </div>
+      </header>
 
-    <ul class="beds">
-      <li v-for="(unit, index) in bedUnits" :key="index" class="bed" :class="{ empty: !unit }">
-        <p class="bed-title">🛏️ 床 {{ index + 1 }}</p>
-        <template v-if="unit">
-          <div class="who">
-            <strong>{{ unit.name }}</strong>
-            <span v-if="unit.potionBoost" class="boost">💊 用药中</span>
-          </div>
-          <HpBar :hp="unit.hp" :max-hp="unit.maxHp" />
-          <button
-            class="dose"
-            type="button"
-            :disabled="!potionReady(unit.id)"
-            @click="store.usePotion(unit.id)"
-          >
-            用药
-          </button>
-        </template>
-        <p v-else class="idle">空床等伤员</p>
-      </li>
-    </ul>
-
-    <section class="queue" aria-label="排队">
-      <h3>排队</h3>
-      <ol v-if="queueUnits.length">
-        <li v-for="unit in queueUnits" :key="unit.id">
-          <span>{{ unit.name }}</span>
-          <span class="wait">等床 · {{ Math.round(unit.hp) }}/{{ unit.maxHp }}</span>
+      <ul class="beds">
+        <li v-for="(unit, index) in bedUnits" :key="index" class="bed" :class="{ empty: !unit }">
+          <p class="bed-title">
+            <CrIcon name="bed" />
+            床 {{ index + 1 }}
+          </p>
+          <template v-if="unit">
+            <div class="who">
+              <UnitFace :name="unit.name" size="sm" />
+              <div>
+                <strong>{{ unit.name }}</strong>
+                <span v-if="unit.potionBoost" class="boost">用药中</span>
+              </div>
+            </div>
+            <HpBar :hp="unit.hp" :max-hp="unit.maxHp" />
+            <button
+              class="cr-btn red sm"
+              type="button"
+              :disabled="!potionReady(unit.id)"
+              @click="store.usePotion(unit.id)"
+            >
+              用药
+            </button>
+          </template>
+          <p v-else class="idle">空床等伤员</p>
         </li>
-      </ol>
-      <p v-else class="idle">没有人排队</p>
-    </section>
+      </ul>
 
-    <button class="expand" type="button" :disabled="!expandReady" @click="store.buyBed()">
-      ➕ 扩床（{{ EXPAND_BED_COST }} 补给）
-    </button>
+      <section class="queue" aria-label="排队">
+        <h3>排队</h3>
+        <ol v-if="queueUnits.length">
+          <li v-for="unit in queueUnits" :key="unit.id">
+            <UnitFace :name="unit.name" size="sm" />
+            <span>{{ unit.name }}</span>
+            <span class="wait">等床 · {{ Math.round(unit.hp) }}/{{ unit.maxHp }}</span>
+          </li>
+        </ol>
+        <p v-else class="idle">没有人排队</p>
+      </section>
+
+      <button class="cr-btn red" type="button" :disabled="!expandReady" @click="store.buyBed()">
+        扩床（{{ EXPAND_BED_COST }} 补给）
+      </button>
+    </div>
   </section>
 </template>
 
@@ -63,36 +77,40 @@ function potionReady(unitId: string): boolean {
 .hospital {
   display: flex;
   flex-direction: column;
-  gap: 14px;
   min-height: 0;
 }
 
-.head h2,
-.head p,
-.queue h3 {
-  margin: 0;
+.hosp-mark {
+  background: #fff0ee;
 }
 
-.head h2,
+.hosp-ink,
 .queue h3 {
-  color: #9b1d2e;
+  color: var(--hospital-ink);
   font-weight: 900;
 }
 
-.head h2 {
-  font-size: 22px;
+.hosp-mute,
+.wait,
+.bed-title,
+.idle {
+  color: #a13a3a;
 }
 
-.head p {
-  margin-top: 6px;
-  color: #a13a3a;
-  font-size: 13px;
-  line-height: 1.5;
+.hospital :deep(.cr-board) {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.hospital :deep(.cr-btn.red:not(.sm)) {
+  flex: 0 0 auto;
+  margin-top: auto;
 }
 
 .beds {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
   margin: 0;
   padding: 0;
@@ -103,9 +121,9 @@ function potionReady(unitId: string): boolean {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-height: 148px;
+  min-height: 168px;
   padding: 12px;
-  border: 3px solid var(--stroke);
+  border: var(--border) solid var(--stroke);
   border-radius: var(--radius-card);
   background: linear-gradient(180deg, #fffdfa 0%, #ffe1dc 100%);
   box-shadow: 0 4px 0 var(--hospital-deep);
@@ -121,87 +139,70 @@ function potionReady(unitId: string): boolean {
   font-size: 14px;
 }
 
-.bed-title,
-.idle {
+.bed-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin: 0;
-  color: #9b1d2e;
   font-weight: 800;
 }
 
+.bed-title :deep(.cr-icon) {
+  width: 18px;
+  height: 18px;
+}
+
 .idle {
+  margin: 0;
   margin-top: auto;
+  font-weight: 800;
 }
 
 .who {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .boost {
+  display: inline-block;
+  margin-left: 4px;
   padding: 2px 8px;
-  border: 2px solid var(--stroke);
+  border: 3px solid var(--stroke);
   border-radius: 999px;
   background: #ffe56a;
   font-size: 11px;
   font-weight: 800;
 }
 
-.dose,
-.expand {
-  border: 3px solid var(--stroke);
-  color: #fff;
-  font-weight: 900;
-}
-
-.dose {
-  margin-top: auto;
-  padding: 8px 10px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #ff8a8a 0%, #e04848 100%);
-  box-shadow: 0 3px 0 #9b1d2e;
-  font-size: 14px;
-}
-
-.dose:disabled,
-.expand:disabled {
-  background: #d5d0c4;
-  box-shadow: 0 3px 0 #8c8678;
-  color: #6b665c;
-}
-
 .queue {
   padding: 12px;
-  border: 3px solid var(--stroke);
+  border: var(--border) solid var(--stroke);
   border-radius: var(--radius-card);
-  background: #fff6f4;
+  background: var(--hospital-soft);
   box-shadow: 0 4px 0 #d7a39c;
+}
+
+.queue h3 {
+  margin: 0;
 }
 
 .queue ol {
   margin: 8px 0 0;
-  padding: 0 0 0 1.2em;
+  padding: 0;
+  list-style: none;
 }
 
 .queue li {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
   gap: 8px;
   margin: 6px 0;
   font-weight: 700;
 }
 
 .wait {
-  color: #a13a3a;
+  margin-left: auto;
   font-size: 12px;
-}
-
-.expand {
-  padding: 14px 16px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, #ff8a8a 0%, #e04848 100%);
-  box-shadow: 0 5px 0 #9b1d2e;
-  font-size: 17px;
 }
 </style>
