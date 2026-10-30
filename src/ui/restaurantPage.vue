@@ -3,10 +3,11 @@ import { storeToRefs } from 'pinia'
 import { DISH_EMOJI, DISH_KINDS, EXPAND_TABLE_COST } from '../sim/config'
 import { canServeDish } from '../sim/game'
 import { useGameStore } from '../store/gameStore'
+import KitchenPanel from './kitchenPanel.vue'
 import StaminaBar from './staminaBar.vue'
 
 const store = useGameStore()
-const { tableUnits, restaurantQueueUnits, expandTableReady, game } = storeToRefs(store)
+const { tableUnits, restaurantQueueUnits, expandTableReady, game, reservedOrders } = storeToRefs(store)
 
 function serveReady(unitId: string): boolean {
   return canServeDish(store.game, unitId)
@@ -61,10 +62,18 @@ function serveReady(unitId: string): boolean {
       <ul>
         <li v-for="kind in DISH_KINDS" :key="kind">
           <span>{{ DISH_EMOJI[kind] }} {{ kind }}</span>
-          <strong>×{{ game.restaurant.shelf[kind] }}</strong>
+          <span class="stock">
+            <strong>×{{ game.restaurant.shelf[kind] }}</strong>
+            <small v-if="game.restaurant.shelfStar[kind] > 0" class="star">
+              ★{{ game.restaurant.shelfStar[kind] }}
+            </small>
+            <small v-if="reservedOrders[kind] > 0" class="hold">订单预留 {{ reservedOrders[kind] }}</small>
+          </span>
         </li>
       </ul>
     </section>
+
+    <KitchenPanel />
 
     <button class="expand" type="button" :disabled="!expandTableReady" @click="store.buyTable()">
       ➕ 扩桌（{{ EXPAND_TABLE_COST }} 补给）
@@ -241,6 +250,32 @@ function serveReady(unitId: string): boolean {
   border: 2px solid var(--stroke);
   border-radius: 12px;
   background: #fffdf2;
+  align-items: center;
+}
+
+.stock {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.star,
+.hold {
+  padding: 1px 6px;
+  border: 2px solid var(--stroke);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.star {
+  background: #ffe56a;
+}
+
+.hold {
+  background: #ffd0a0;
 }
 
 .wait {

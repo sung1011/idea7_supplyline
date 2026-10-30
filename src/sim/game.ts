@@ -6,6 +6,7 @@ import {
   EXPAND_TABLE_COST,
   HUNGER_STAMINA,
   INITIAL_BED_COUNT,
+  INITIAL_KITCHEN_COUNT,
   INITIAL_POTION_COUNT,
   INITIAL_SHELF_PER_DISH,
   INITIAL_SUPPLY,
@@ -19,6 +20,7 @@ import {
   UNIT_MAX_STAMINA,
   UNIT_NAMES,
 } from './config'
+import { consumeShelfDish, createChefWeight, createEmptyShelf, createInitialKitchen } from './kitchen'
 import type { DishKind, GameState, RestaurantState, ShelfStock, Unit } from './types'
 
 export function createShelf(count = INITIAL_SHELF_PER_DISH): ShelfStock {
@@ -34,7 +36,11 @@ export function createRestaurantState(): RestaurantState {
     tables: Array.from({ length: INITIAL_TABLE_COUNT }, () => null),
     queue: [],
     shelf: createShelf(),
+    shelfStar: createEmptyShelf(),
     nextDishIndex: 0,
+    kitchen: createInitialKitchen(),
+    nextIngredientId: INITIAL_KITCHEN_COUNT + 1,
+    chefWeight: createChefWeight(),
   }
 }
 
@@ -351,7 +357,7 @@ export function serveDish(state: GameState, unitId: string): boolean {
   if (!canServeDish(state, unitId)) return false
   const unit = findUnit(state, unitId)
   if (!unit || !unit.order) return false
-  state.restaurant.shelf[unit.order] -= 1
+  consumeShelfDish(state, unit.order)
   unit.served = true
   return true
 }

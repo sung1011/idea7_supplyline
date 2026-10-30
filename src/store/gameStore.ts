@@ -15,8 +15,16 @@ import {
   starveAndSendToRestaurant,
   tick,
 } from '../sim/game'
+import {
+  boostChefWeight,
+  cookByChefPreference,
+  cookIngredient,
+  grantCoarse,
+  mergeIngredients,
+  reservedOrderCounts,
+} from '../sim/kitchen'
 import { loadGame, saveGame } from '../sim/save'
-import type { Unit } from '../sim/types'
+import type { DishKind, Unit } from '../sim/types'
 
 export type MainTab = 'camp' | 'hospital' | 'restaurant'
 
@@ -45,6 +53,7 @@ export const useGameStore = defineStore('game', () => {
   const starveReady = computed(() => canStarve(game))
   const expandReady = computed(() => canExpandBed(game))
   const expandTableReady = computed(() => canExpandTable(game))
+  const reservedOrders = computed(() => reservedOrderCounts(game))
 
   function persist(): void {
     saveGame(game)
@@ -88,6 +97,35 @@ export const useGameStore = defineStore('game', () => {
 
   function restock(): void {
     restockShelf(game)
+    persist()
+  }
+
+  function mergeKitchen(idA: string, idB: string): boolean {
+    const ok = mergeIngredients(game, idA, idB)
+    if (ok) persist()
+    return ok
+  }
+
+  function cookItem(id: string): boolean {
+    const ok = cookIngredient(game, id)
+    if (ok) persist()
+    return ok
+  }
+
+  function cookPreferred(): boolean {
+    const ok = cookByChefPreference(game)
+    if (ok) persist()
+    return ok
+  }
+
+  function giveCoarse(): boolean {
+    const ok = grantCoarse(game)
+    if (ok) persist()
+    return ok
+  }
+
+  function preferDish(kind: DishKind): void {
+    boostChefWeight(game, kind)
     persist()
   }
 
@@ -157,6 +195,7 @@ export const useGameStore = defineStore('game', () => {
     starveReady,
     expandReady,
     expandTableReady,
+    reservedOrders,
     sendInjured,
     sendHungry,
     usePotion,
@@ -164,6 +203,11 @@ export const useGameStore = defineStore('game', () => {
     buyBed,
     buyTable,
     restock,
+    mergeKitchen,
+    cookItem,
+    cookPreferred,
+    giveCoarse,
+    preferDish,
     persist,
     startClock,
     stopClock,

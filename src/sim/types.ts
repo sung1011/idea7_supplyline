@@ -7,6 +7,18 @@ export type UnitLocation =
 
 export type DishKind = '粥' | '炒饭' | '烤肉'
 
+export type IngredientQuality = '粗料' | '好料' | '精品'
+
+export type Ingredient = {
+  id: string
+  kind: DishKind
+  quality: IngredientQuality
+}
+
+export type ChefWeight = Record<DishKind, number>
+
+export type Rng = () => number
+
 export type Unit = {
   id: string
   name: string
@@ -29,7 +41,13 @@ export type RestaurantState = {
   tables: (string | null)[]
   queue: string[]
   shelf: ShelfStock
+  /** 货架上带星标的份数，不超过对应种类库存；不接战斗 buff。 */
+  shelfStar: ShelfStock
   nextDishIndex: number
+  /** 后厨材料栏，上限见 KITCHEN_SLOT_MAX。 */
+  kitchen: Ingredient[]
+  nextIngredientId: number
+  chefWeight: ChefWeight
 }
 
 export type GameState = {
