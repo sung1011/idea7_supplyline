@@ -2,16 +2,17 @@
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '../store/gameStore'
 import HpBar from './hpBar.vue'
+import StaminaBar from './staminaBar.vue'
 
 const store = useGameStore()
-const { campUnits, injureReady } = storeToRefs(store)
+const { campUnits, injureReady, starveReady } = storeToRefs(store)
 </script>
 
 <template>
   <section class="camp" aria-label="营地">
     <header class="head">
       <h2>🏕️ 营地待命</h2>
-      <p>满血的人才能送去医院练手。补给完成的人会回到这里。</p>
+      <p>满血可送医院，满体力可送餐厅。补给完成的人会回到这里。</p>
     </header>
     <ul v-if="campUnits.length" class="list">
       <li v-for="unit in campUnits" :key="unit.id" class="card">
@@ -20,12 +21,18 @@ const { campUnits, injureReady } = storeToRefs(store)
           <strong>{{ unit.name }}</strong>
         </div>
         <HpBar :hp="unit.hp" :max-hp="unit.maxHp" />
+        <StaminaBar :stamina="unit.stamina" :max-stamina="unit.maxStamina" />
       </li>
     </ul>
-    <p v-else class="empty">营地点名空空，人都在医院。</p>
-    <button class="action" type="button" :disabled="!injureReady" @click="store.sendInjured()">
-      造伤送医
-    </button>
+    <p v-else class="empty">营地点名空空，人都在医院或餐厅。</p>
+    <div class="actions">
+      <button class="action" type="button" :disabled="!injureReady" @click="store.sendInjured()">
+        造伤送医
+      </button>
+      <button class="action hungry" type="button" :disabled="!starveReady" @click="store.sendHungry()">
+        饿了送餐
+      </button>
+    </div>
   </section>
 </template>
 
@@ -100,8 +107,13 @@ const { campUnits, injureReady } = storeToRefs(store)
   font-weight: 700;
 }
 
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .action {
-  margin-top: 4px;
   padding: 14px 16px;
   border: 3px solid var(--stroke);
   border-radius: 18px;
@@ -110,6 +122,11 @@ const { campUnits, injureReady } = storeToRefs(store)
   font-size: 18px;
   font-weight: 900;
   box-shadow: 0 5px 0 #c97800;
+}
+
+.action.hungry {
+  background: linear-gradient(180deg, #ffd36a 0%, #f08a20 100%);
+  box-shadow: 0 5px 0 #c45c00;
 }
 
 .action:disabled {

@@ -4,15 +4,21 @@ import { OFFLINE_TICK_CAP_SEC } from '../sim/config'
 import {
   applyPotion,
   canExpandBed,
+  canExpandTable,
   canInjure,
+  canStarve,
   expandBed,
+  expandTable,
   injureAndSendToHospital,
+  restockShelf,
+  serveDish,
+  starveAndSendToRestaurant,
   tick,
 } from '../sim/game'
 import { loadGame, saveGame } from '../sim/save'
 import type { Unit } from '../sim/types'
 
-export type MainTab = 'camp' | 'hospital'
+export type MainTab = 'camp' | 'hospital' | 'restaurant'
 
 export const useGameStore = defineStore('game', () => {
   const game = reactive(loadGame())
@@ -27,8 +33,18 @@ export const useGameStore = defineStore('game', () => {
   const bedUnits = computed(() =>
     game.beds.map((id) => (id ? (game.units.find((unit) => unit.id === id) ?? null) : null)),
   )
+  const tableUnits = computed(() =>
+    game.restaurant.tables.map((id) => (id ? (game.units.find((unit) => unit.id === id) ?? null) : null)),
+  )
+  const restaurantQueueUnits = computed(() =>
+    game.restaurant.queue
+      .map((id) => game.units.find((unit) => unit.id === id))
+      .filter((unit): unit is Unit => !!unit),
+  )
   const injureReady = computed(() => canInjure(game))
+  const starveReady = computed(() => canStarve(game))
   const expandReady = computed(() => canExpandBed(game))
+  const expandTableReady = computed(() => canExpandTable(game))
 
   function persist(): void {
     saveGame(game)
@@ -40,8 +56,20 @@ export const useGameStore = defineStore('game', () => {
     return ok
   }
 
+  function sendHungry(): boolean {
+    const ok = starveAndSendToRestaurant(game)
+    if (ok) persist()
+    return ok
+  }
+
   function usePotion(unitId: string): boolean {
     const ok = applyPotion(game, unitId)
+    if (ok) persist()
+    return ok
+  }
+
+  function serveMeal(unitId: string): boolean {
+    const ok = serveDish(game, unitId)
     if (ok) persist()
     return ok
   }
@@ -50,6 +78,17 @@ export const useGameStore = defineStore('game', () => {
     const ok = expandBed(game)
     if (ok) persist()
     return ok
+  }
+
+  function buyTable(): boolean {
+    const ok = expandTable(game)
+    if (ok) persist()
+    return ok
+  }
+
+  function restock(): void {
+    restockShelf(game)
+    persist()
   }
 
   let lastTs = Date.now()
@@ -112,11 +151,19 @@ export const useGameStore = defineStore('game', () => {
     campUnits,
     queueUnits,
     bedUnits,
+    tableUnits,
+    restaurantQueueUnits,
     injureReady,
+    starveReady,
     expandReady,
+    expandTableReady,
     sendInjured,
+    sendHungry,
     usePotion,
+    serveMeal,
     buyBed,
+    buyTable,
+    restock,
     persist,
     startClock,
     stopClock,

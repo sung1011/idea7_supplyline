@@ -6,6 +6,7 @@ import { GAME_NAME } from '../sim/placeholder'
 import { useGameStore } from '../store/gameStore'
 import CampPage from './campPage.vue'
 import HospitalPage from './hospitalPage.vue'
+import RestaurantPage from './restaurantPage.vue'
 
 const store = useGameStore()
 const { tab, game } = storeToRefs(store)
@@ -34,7 +35,8 @@ onUnmounted(() => {
 
     <main class="page">
       <CampPage v-if="tab === 'camp'" />
-      <HospitalPage v-else />
+      <HospitalPage v-else-if="tab === 'hospital'" />
+      <RestaurantPage v-else />
     </main>
 
     <nav class="tabs" aria-label="区域">
@@ -58,10 +60,15 @@ onUnmounted(() => {
         <span aria-hidden="true">🏥</span>
         医院
       </button>
-      <button type="button" class="tab locked" disabled>
+      <button
+        type="button"
+        class="tab"
+        :class="{ on: tab === 'restaurant' }"
+        :aria-current="tab === 'restaurant' ? 'page' : undefined"
+        @click="tab = 'restaurant'"
+      >
         <span aria-hidden="true">🍽️</span>
         餐厅
-        <small>未开放</small>
       </button>
     </nav>
   </div>
@@ -84,6 +91,10 @@ onUnmounted(() => {
 
 .shell.hospital {
   background: linear-gradient(180deg, #ffe4df 0%, #ff9b8f 46%, #ef6b62 100%);
+}
+
+.shell.restaurant {
+  background: linear-gradient(180deg, #fff3c4 0%, #ffcc4d 46%, #f0a020 100%);
 }
 
 .hud {
@@ -177,16 +188,5 @@ onUnmounted(() => {
 
 .tab.on {
   background: linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
-}
-
-.tab.locked {
-  background: #d8d2c6;
-  box-shadow: 0 4px 0 #8c8678;
-  color: #6b665c;
-}
-
-.tab small {
-  font-size: 10px;
-  font-weight: 800;
 }
 </style>
