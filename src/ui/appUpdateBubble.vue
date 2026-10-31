@@ -98,8 +98,8 @@ watch(
   padding: 10px 12px 12px;
   border: 3px solid var(--stroke);
   border-radius: 16px;
-  background: linear-gradient(180deg, #fffdf2 0%, #ffe9a0 100%);
-  box-shadow: 0 4px 0 var(--stroke-deep);
+  background: var(--gloss), linear-gradient(180deg, #fffdf2 0%, #ffe9a0 100%);
+  box-shadow: 0 4px 0 var(--stroke-deep), var(--plastic);
   color: var(--ink);
 }
 
@@ -200,8 +200,8 @@ watch(
   min-height: 40px;
   border: 3px solid var(--stroke);
   border-radius: 14px;
-  background: linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
-  box-shadow: 0 3px 0 #c97800;
+  background: var(--gloss), linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
+  box-shadow: 0 3px 0 #c97800, inset 0 1px 0 var(--glint);
   color: var(--ink);
   font-weight: 900;
 }

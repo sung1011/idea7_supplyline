@@ -24,6 +24,13 @@
   --restaurant-ink: #8a4a00;
   --sky: #4ec8ff;
   --shadow: rgba(23, 10, 4, 0.38);
+  --glint: rgba(255, 255, 255, 0.78);
+  --inset-shade: rgba(42, 20, 8, 0.1);
+  --gloss: linear-gradient(180deg, rgba(255, 255, 255, 0.52) 0%, rgba(255, 255, 255, 0) 30%);
+  --plastic: inset 0 2px 0 rgba(255, 255, 255, 0.72), inset 0 -4px 10px rgba(42, 20, 8, 0.1);
+  --tint-camp: linear-gradient(180deg, #f4ffe6 0%, #d2ee86 100%);
+  --tint-hospital: linear-gradient(180deg, #fff8f6 0%, #ffd0ca 100%);
+  --tint-restaurant: linear-gradient(180deg, #fff8dc 0%, #ffde7a 100%);
   --radius: 24px;
   --radius-card: 26px;
   --radius-btn: 18px;
@@ -80,19 +87,47 @@ button:disabled {
   padding: 14px;
   border: var(--border) solid var(--stroke);
   border-radius: var(--radius-card);
-  background: var(--paper);
-  box-shadow: 0 6px 0 var(--stroke-deep);
+  background: var(--gloss), var(--paper);
+  box-shadow: 0 6px 0 var(--stroke-deep), var(--plastic);
+}
+
+.cr-board.tint-camp {
+  background: var(--gloss), var(--tint-camp);
+}
+
+.cr-board.tint-hospital {
+  background: var(--gloss), var(--tint-hospital);
+}
+
+.cr-board.tint-restaurant {
+  background: var(--gloss), var(--tint-restaurant);
 }
 
 .cr-btn,
 .cr-tab,
 .cr-pill,
 .cr-gear {
+  position: relative;
   border: var(--border) solid var(--stroke);
   color: var(--ink);
   font-weight: 900;
-  box-shadow: 0 var(--lift) 0 var(--stroke-deep);
+  box-shadow: 0 var(--lift) 0 var(--stroke-deep), inset 0 1px 0 var(--glint);
   transition: transform var(--motion), box-shadow var(--motion), background var(--motion);
+}
+
+.cr-btn::after,
+.cr-tab::after,
+.cr-pill::after,
+.cr-gear::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 4px;
+  height: 1px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.72);
+  pointer-events: none;
 }
 
 .cr-btn {
@@ -102,24 +137,24 @@ button:disabled {
 }
 
 .cr-btn.gold {
-  background: linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
-  box-shadow: 0 var(--lift) 0 #c45e00;
+  background: var(--gloss), linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
+  box-shadow: 0 var(--lift) 0 #c45e00, inset 0 1px 0 var(--glint);
 }
 
 .cr-btn.orange {
-  background: linear-gradient(180deg, #ffd36a 0%, #f08a18 100%);
-  box-shadow: 0 var(--lift) 0 #c45c00;
+  background: var(--gloss), linear-gradient(180deg, #ffd36a 0%, #f08a18 100%);
+  box-shadow: 0 var(--lift) 0 #c45c00, inset 0 1px 0 var(--glint);
 }
 
 .cr-btn.red {
-  background: linear-gradient(180deg, #ff8a8a 0%, #e03a40 100%);
-  box-shadow: 0 var(--lift) 0 #9b1230;
+  background: var(--gloss), linear-gradient(180deg, #ff8a8a 0%, #e03a40 100%);
+  box-shadow: 0 var(--lift) 0 #9b1230, inset 0 1px 0 rgba(255, 255, 255, 0.45);
   color: #fff;
 }
 
 .cr-btn.cream {
-  background: linear-gradient(180deg, #fff8dc 0%, #ffd36a 100%);
-  box-shadow: 0 var(--lift) 0 #c9a227;
+  background: var(--gloss), linear-gradient(180deg, #fff8dc 0%, #ffd36a 100%);
+  box-shadow: 0 var(--lift) 0 #c9a227, inset 0 1px 0 var(--glint);
 }
 
 .cr-btn.sm {
@@ -131,8 +166,13 @@ button:disabled {
 .cr-btn:disabled,
 .cr-tab:disabled {
   background: #d8d2c4;
-  box-shadow: 0 var(--lift) 0 #8c8678;
+  box-shadow: 0 var(--lift) 0 #8c8678, inset 0 1px 0 rgba(255, 255, 255, 0.35);
   color: #6b665c;
+}
+
+.cr-btn:disabled::after,
+.cr-tab:disabled::after {
+  opacity: 0.35;
 }
 
 .cr-btn:not(:disabled):active,
@@ -140,7 +180,7 @@ button:disabled {
 .cr-gear:not(:disabled):active,
 .cr-pill:active {
   transform: translateY(var(--lift));
-  box-shadow: 0 0 0 var(--stroke-deep);
+  box-shadow: 0 0 0 var(--stroke-deep), inset 0 1px 0 var(--glint);
 }
 
 .scene-head {
@@ -150,6 +190,7 @@ button:disabled {
 }
 
 .scene-mark {
+  position: relative;
   display: grid;
   place-items: center;
   width: 48px;
@@ -157,9 +198,21 @@ button:disabled {
   flex: 0 0 auto;
   border: var(--border) solid var(--stroke);
   border-radius: 16px;
-  background: #fffdf6;
-  box-shadow: 0 4px 0 var(--stroke-deep);
+  background: var(--gloss), #fffdf6;
+  box-shadow: 0 4px 0 var(--stroke-deep), var(--plastic);
   font-size: 28px;
+}
+
+.scene-mark::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 5px;
+  height: 1px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.7);
+  pointer-events: none;
 }
 
 .scene-head h2,

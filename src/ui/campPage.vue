@@ -12,7 +12,7 @@ const { campUnits, injureReady, starveReady } = storeToRefs(store)
 
 <template>
   <section class="camp" aria-label="营地">
-    <div class="cr-board">
+    <div class="cr-board tint-camp">
       <header class="scene-head">
         <span class="scene-mark camp-mark"><CrIcon name="tent" /></span>
         <div>
@@ -58,7 +58,7 @@ const { campUnits, injureReady, starveReady } = storeToRefs(store)
 }
 
 .camp-mark {
-  background: #e8ffc8;
+  background: var(--gloss), #e8ffc8;
 }
 
 .camp-ink {
@@ -85,8 +85,8 @@ const { campUnits, injureReady, starveReady } = storeToRefs(store)
   padding: 10px 12px;
   border: var(--border) solid var(--stroke);
   border-radius: var(--radius-card);
-  background: linear-gradient(180deg, #fffdf2 0%, #e8ffc8 100%);
-  box-shadow: 0 4px 0 var(--camp-deep);
+  background: var(--gloss), linear-gradient(180deg, #fffdf2 0%, #e8ffc8 100%);
+  box-shadow: 0 4px 0 var(--camp-deep), var(--plastic);
 }
 
 .meta {

@@ -321,8 +321,8 @@ onUnmounted(() => {
   padding: 12px 12px 10px;
   border: var(--border) solid var(--stroke);
   border-radius: var(--radius-card);
-  background: linear-gradient(180deg, #fffdf2 0%, #ffe9a8 100%);
-  box-shadow: 0 var(--lift) 0 var(--stroke-deep);
+  background: var(--gloss), var(--tint-restaurant);
+  box-shadow: 0 var(--lift) 0 var(--stroke-deep), var(--plastic);
 }
 
 .title {
@@ -350,12 +350,25 @@ header .title,
 }
 
 .box button {
+  position: relative;
   border: var(--border) solid var(--stroke);
   border-radius: 14px;
-  background: linear-gradient(180deg, #fff8dc 0%, #ffe56a 100%);
-  box-shadow: 0 var(--lift) 0 var(--stroke-deep);
+  background: var(--gloss), linear-gradient(180deg, #fff8dc 0%, #ffe56a 100%);
+  box-shadow: 0 var(--lift) 0 var(--stroke-deep), inset 0 1px 0 var(--glint);
   color: var(--ink);
   font-weight: 800;
+}
+
+.box button::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 4px;
+  height: 1px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.7);
+  pointer-events: none;
 }
 
 .close {
@@ -407,7 +420,9 @@ header .title,
 
 .sub button.on {
   color: var(--ink);
-  background: linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
+  background: var(--gloss), linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
+  box-shadow: 0 5px 0 #c45e00, inset 0 1px 0 var(--glint);
+  transform: translateY(-1px);
 }
 
 .body,
@@ -489,7 +504,8 @@ header .title,
   padding: 10px;
   border: var(--border) solid var(--stroke);
   border-radius: var(--radius);
-  background: #fffdf2;
+  background: var(--gloss), #fffdf2;
+  box-shadow: var(--plastic);
 }
 
 .ver-card {
@@ -558,7 +574,7 @@ header .title,
 
 .refresh {
   color: var(--ink);
-  background: linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
+  background: var(--gloss), linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
 }
 
 .gm-group {
@@ -615,8 +631,8 @@ header .title,
   padding: 12px;
   border: var(--border) solid var(--stroke);
   border-radius: var(--radius-card);
-  background: var(--plate);
-  box-shadow: 0 var(--lift) 0 var(--stroke-deep);
+  background: var(--gloss), var(--plate);
+  box-shadow: 0 var(--lift) 0 var(--stroke-deep), var(--plastic);
 }
 
 .ask p {
@@ -631,12 +647,13 @@ header .title,
 }
 
 .ask-actions button {
+  position: relative;
   width: 100%;
   min-height: 40px;
   border: var(--border) solid var(--stroke);
   border-radius: 14px;
-  background: linear-gradient(180deg, #fff8dc 0%, #ffe56a 100%);
-  box-shadow: 0 var(--lift) 0 var(--stroke-deep);
+  background: var(--gloss), linear-gradient(180deg, #fff8dc 0%, #ffe56a 100%);
+  box-shadow: 0 var(--lift) 0 var(--stroke-deep), inset 0 1px 0 var(--glint);
   color: var(--ink);
   font-weight: 800;
 }

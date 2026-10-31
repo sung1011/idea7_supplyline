@@ -148,12 +148,12 @@ function doPreferCook(): void {
   padding: 14px;
   border: var(--border) solid var(--stroke);
   border-radius: var(--radius-card);
-  background: linear-gradient(180deg, #fffdf2 0%, #ffe9b8 100%);
-  box-shadow: 0 6px 0 var(--stroke-deep);
+  background: var(--gloss), var(--tint-restaurant);
+  box-shadow: 0 6px 0 var(--stroke-deep), var(--plastic);
 }
 
 .rest-mark {
-  background: #fff3c4;
+  background: var(--gloss), #fff3c4;
 }
 
 .rest-ink,
@@ -201,8 +201,8 @@ function doPreferCook(): void {
   padding: 6px 4px;
   border: var(--border) solid var(--stroke);
   border-radius: 16px;
-  background: linear-gradient(180deg, #fffdf2 0%, #ffe7a8 100%);
-  box-shadow: 0 var(--lift) 0 #c97800;
+  background: var(--gloss), linear-gradient(180deg, #fffdf2 0%, #ffe7a8 100%);
+  box-shadow: 0 var(--lift) 0 #c97800, var(--plastic);
   color: var(--ink);
   font-weight: 800;
 }
@@ -217,21 +217,21 @@ function doPreferCook(): void {
 }
 
 .slot.coarse {
-  background: linear-gradient(180deg, #fffdf2 0%, #f0d9a0 100%);
+  background: var(--gloss), linear-gradient(180deg, #fffdf2 0%, #f0d9a0 100%);
 }
 
 .slot.fine {
-  background: linear-gradient(180deg, #fff4c4 0%, #ffc85a 100%);
+  background: var(--gloss), linear-gradient(180deg, #fff4c4 0%, #ffc85a 100%);
 }
 
 .slot.premium {
-  background: linear-gradient(180deg, #ffe9a0 0%, #ff9f3a 100%);
+  background: var(--gloss), linear-gradient(180deg, #ffe9a0 0%, #ff9f3a 100%);
 }
 
 .slot.on {
   outline: 3px solid #ff7a00;
   outline-offset: -1px;
-  background: linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
+  background: var(--gloss), linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
 }
 
 .slot.empty {
@@ -276,8 +276,8 @@ function doPreferCook(): void {
   padding: 6px 8px;
   border: var(--border) solid var(--stroke);
   border-radius: 14px;
-  background: #fffdf2;
-  box-shadow: 0 var(--lift) 0 #d7b36a;
+  background: var(--gloss), #fffdf2;
+  box-shadow: 0 var(--lift) 0 #d7b36a, inset 0 1px 0 var(--glint);
   font-size: 13px;
   font-weight: 800;
 }

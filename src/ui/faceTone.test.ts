@@ -1,5 +1,9 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { faceTone, hashName, NAMED_FACES } from './faceTone'
+import face from './unitFace.vue?raw'
+
+const tokens = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8')
 
 describe('单位大头色板', () => {
   it('四人表驱动色固定', () => {
@@ -15,5 +19,14 @@ describe('单位大头色板', () => {
     expect(a).toEqual(b)
     expect(hashName('巡逻甲')).toBe(hashName('巡逻甲'))
     expect(a.ring).toMatch(/^#/)
+  })
+
+  it('md 大头约 64px，壳只用渐变高光不加噪点', () => {
+    expect(face).toContain('width: 64px')
+    expect(face).toContain('height: 64px')
+    expect(face).not.toMatch(/feTurbulence|feDiffuseLighting|fractalNoise/)
+    expect(tokens).toContain('--plastic')
+    expect(tokens).toContain('--gloss')
+    expect(tokens).not.toMatch(/feTurbulence|noise\(|url\(['\"]?data:image/)
   })
 })

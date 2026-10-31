@@ -17,7 +17,7 @@ function potionReady(unitId: string): boolean {
 
 <template>
   <section class="hospital" aria-label="医院">
-    <div class="cr-board">
+    <div class="cr-board tint-hospital">
       <header class="scene-head">
         <span class="scene-mark hosp-mark"><CrIcon name="cross" /></span>
         <div>
@@ -81,7 +81,7 @@ function potionReady(unitId: string): boolean {
 }
 
 .hosp-mark {
-  background: #fff0ee;
+  background: var(--gloss), #fff0ee;
 }
 
 .hosp-ink,
@@ -125,12 +125,12 @@ function potionReady(unitId: string): boolean {
   padding: 12px;
   border: var(--border) solid var(--stroke);
   border-radius: var(--radius-card);
-  background: linear-gradient(180deg, #fffdfa 0%, #ffe1dc 100%);
-  box-shadow: 0 4px 0 var(--hospital-deep);
+  background: var(--gloss), linear-gradient(180deg, #fffdfa 0%, #ffe1dc 100%);
+  box-shadow: 0 4px 0 var(--hospital-deep), var(--plastic);
 }
 
 .bed.empty {
-  background: linear-gradient(180deg, #fff8f6 0%, #ffd0c8 100%);
+  background: var(--gloss), linear-gradient(180deg, #fff8f6 0%, #ffd0c8 100%);
 }
 
 .bed-title,
@@ -179,8 +179,8 @@ function potionReady(unitId: string): boolean {
   padding: 12px;
   border: var(--border) solid var(--stroke);
   border-radius: var(--radius-card);
-  background: var(--hospital-soft);
-  box-shadow: 0 4px 0 #d7a39c;
+  background: var(--gloss), var(--hospital-soft);
+  box-shadow: 0 4px 0 #d7a39c, var(--plastic);
 }
 
 .queue h3 {

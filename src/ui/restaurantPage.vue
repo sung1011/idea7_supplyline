@@ -19,7 +19,7 @@ function serveReady(unitId: string): boolean {
 
 <template>
   <section class="restaurant" aria-label="餐厅">
-    <div class="cr-board">
+    <div class="cr-board tint-restaurant">
       <header class="scene-head">
         <span class="scene-mark rest-mark"><CrIcon name="plate" /></span>
         <div>
@@ -104,7 +104,7 @@ function serveReady(unitId: string): boolean {
 }
 
 .rest-mark {
-  background: #fff3c4;
+  background: var(--gloss), #fff3c4;
 }
 
 .rest-ink,
@@ -138,12 +138,12 @@ function serveReady(unitId: string): boolean {
   padding: 12px;
   border: var(--border) solid var(--stroke);
   border-radius: var(--radius-card);
-  background: linear-gradient(180deg, #fffdf2 0%, #ffe7a8 100%);
-  box-shadow: 0 4px 0 var(--restaurant-deep);
+  background: var(--gloss), linear-gradient(180deg, #fffdf2 0%, #ffe7a8 100%);
+  box-shadow: 0 4px 0 var(--restaurant-deep), var(--plastic);
 }
 
 .table.empty {
-  background: linear-gradient(180deg, #fffaf0 0%, #ffd98a 100%);
+  background: var(--gloss), linear-gradient(180deg, #fffaf0 0%, #ffd98a 100%);
 }
 
 .table-title,
@@ -212,8 +212,8 @@ function serveReady(unitId: string): boolean {
   padding: 12px;
   border: var(--border) solid var(--stroke);
   border-radius: var(--radius-card);
-  background: var(--restaurant-soft);
-  box-shadow: 0 4px 0 #d7b36a;
+  background: var(--gloss), var(--restaurant-soft);
+  box-shadow: 0 4px 0 #d7b36a, var(--plastic);
 }
 
 .queue h3,
@@ -258,8 +258,8 @@ function serveReady(unitId: string): boolean {
   padding: 8px 4px 10px;
   border: var(--border) solid var(--stroke);
   border-radius: 18px;
-  background: var(--slot);
-  box-shadow: 0 4px 0 #c9a227;
+  background: var(--gloss), var(--slot);
+  box-shadow: 0 4px 0 #c9a227, var(--plastic);
 }
 
 .slot strong {

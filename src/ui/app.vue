@@ -204,8 +204,12 @@ onUnmounted(() => {
   min-height: 36px;
   padding: 4px 10px;
   border-radius: 999px;
-  background: #fff8dc;
+  background: var(--gloss), linear-gradient(180deg, #fffdf2 0%, #ffe08a 100%);
   font-size: 14px;
+}
+
+.cr-pill.potion {
+  background: var(--gloss), linear-gradient(180deg, #fff4f0 0%, #ffb8b0 100%);
 }
 
 .cr-pill :deep(.cr-icon) {
@@ -224,10 +228,27 @@ onUnmounted(() => {
   padding: 0;
   border: var(--border) solid var(--stroke);
   border-radius: 14px;
-  background: linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
-  box-shadow: 0 var(--lift) 0 var(--stroke-deep);
+  background: var(--gloss), linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
+  box-shadow: 0 var(--lift) 0 var(--stroke-deep), inset 0 1px 0 var(--glint);
   font-size: 22px;
   color: var(--ink);
+}
+
+.gear::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 4px;
+  height: 1px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.72);
+  pointer-events: none;
+}
+
+.gear:not(:disabled):active {
+  transform: translateY(var(--lift));
+  box-shadow: 0 0 0 var(--stroke-deep), inset 0 1px 0 var(--glint);
 }
 
 .gear :deep(.cr-icon) {
@@ -268,7 +289,7 @@ onUnmounted(() => {
   gap: 8px;
   padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
   border-top: 4px solid var(--stroke);
-  background: #ffe08a;
+  background: var(--gloss), #ffe08a;
 }
 
 .cr-tab {
@@ -280,7 +301,7 @@ onUnmounted(() => {
   min-height: 68px;
   padding: 6px 4px;
   border-radius: 18px;
-  background: #fff8dc;
+  background: var(--gloss), linear-gradient(180deg, #fffdf2 0%, #ffe7a4 100%);
   font-size: 14px;
 }
 
@@ -290,6 +311,19 @@ onUnmounted(() => {
 }
 
 .cr-tab.on {
-  background: linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
+  background: var(--gloss), linear-gradient(180deg, #ffe56a 0%, #ffb020 100%);
+  box-shadow: 0 6px 0 #c45e00, inset 0 1px 0 var(--glint);
+  transform: translateY(-2px);
+}
+
+.cr-tab.on:not(:disabled):active {
+  transform: translateY(var(--lift));
+  box-shadow: 0 0 0 #c45e00, inset 0 1px 0 var(--glint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cr-tab.on {
+    transform: none;
+  }
 }
 </style>
