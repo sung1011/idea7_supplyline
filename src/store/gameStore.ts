@@ -46,6 +46,12 @@ export const useGameStore = defineStore('game', () => {
   const tab = ref<MainTab>('camp')
 
   const campUnits = computed(() => game.units.filter((unit) => unit.location === 'camp'))
+  /** 营地待命列表第一人，不是「第一个可出征的」。 */
+  const campLeader = computed(() => campUnits.value[0] ?? null)
+  const campLeaderReady = computed(() => {
+    const leader = campLeader.value
+    return !!leader && canMarchUnit(game, leader.id)
+  })
   const marchingUnits = computed(() => game.units.filter((unit) => unit.location === 'marching'))
   const captiveUnits = computed(() =>
     game.units.filter((unit) => unit.location === 'captive' || unit.location === 'persuading'),
@@ -110,6 +116,12 @@ export const useGameStore = defineStore('game', () => {
 
   function marchReady(unitId: string): boolean {
     return canMarchUnit(game, unitId)
+  }
+
+  function marchCampLeader(): boolean {
+    const leader = campLeader.value
+    if (!leader || !marchReady(leader.id)) return false
+    return marchUnit(leader.id)
   }
 
   function persuadeReady(unitId: string): boolean {
@@ -246,6 +258,8 @@ export const useGameStore = defineStore('game', () => {
     game,
     tab,
     campUnits,
+    campLeader,
+    campLeaderReady,
     marchingUnits,
     captiveUnits,
     queueUnits,
@@ -260,6 +274,7 @@ export const useGameStore = defineStore('game', () => {
     sendInjured,
     sendHungry,
     marchUnit,
+    marchCampLeader,
     persuadeUnit,
     marchReady,
     persuadeReady,

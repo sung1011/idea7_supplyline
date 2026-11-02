@@ -41,6 +41,9 @@
   --font-body: 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   --font-mono: ui-monospace, 'SFMono-Regular', monospace;
   --z-hud: 4;
+  --z-fab: 8;
+  --march-fab-size: 92px;
+  --march-fab-slot: 100px;
   --z-modal: 20;
   --z-settings: 20;
   --z-confirm: 30;

@@ -17,6 +17,7 @@ import CampPage from './campPage.vue'
 import CrIcon from './crIcon.vue'
 import FloatTips from './floatTips.vue'
 import HospitalPage from './hospitalPage.vue'
+import MarchFab from './marchFab.vue'
 import RestaurantPage from './restaurantPage.vue'
 import SettingsPanel from './settingsPanel.vue'
 
@@ -79,37 +80,43 @@ onUnmounted(() => {
     </main>
 
     <nav class="tabs" aria-label="区域">
-      <button
-        type="button"
-        class="cr-tab"
-        :class="{ on: tab === 'camp' }"
-        :aria-current="tab === 'camp' ? 'page' : undefined"
-        @click="tab = 'camp'"
-      >
-        <CrIcon name="tent" />
-        营地
-      </button>
-      <button
-        type="button"
-        class="cr-tab"
-        :class="{ on: tab === 'hospital' }"
-        :aria-current="tab === 'hospital' ? 'page' : undefined"
-        @click="tab = 'hospital'"
-      >
-        <CrIcon name="cross" />
-        医院
-      </button>
-      <button
-        type="button"
-        class="cr-tab"
-        :class="{ on: tab === 'restaurant' }"
-        :aria-current="tab === 'restaurant' ? 'page' : undefined"
-        @click="tab = 'restaurant'"
-      >
-        <CrIcon name="plate" />
-        餐厅
-      </button>
+      <div class="tab-side">
+        <button
+          type="button"
+          class="cr-tab"
+          :class="{ on: tab === 'camp' }"
+          :aria-current="tab === 'camp' ? 'page' : undefined"
+          @click="tab = 'camp'"
+        >
+          <CrIcon name="tent" />
+          营地
+        </button>
+      </div>
+      <span class="tab-slot" aria-hidden="true" />
+      <div class="tab-side dual">
+        <button
+          type="button"
+          class="cr-tab"
+          :class="{ on: tab === 'hospital' }"
+          :aria-current="tab === 'hospital' ? 'page' : undefined"
+          @click="tab = 'hospital'"
+        >
+          <CrIcon name="cross" />
+          医院
+        </button>
+        <button
+          type="button"
+          class="cr-tab"
+          :class="{ on: tab === 'restaurant' }"
+          :aria-current="tab === 'restaurant' ? 'page' : undefined"
+          @click="tab = 'restaurant'"
+        >
+          <CrIcon name="plate" />
+          餐厅
+        </button>
+      </div>
     </nav>
+    <MarchFab />
 
     <AppUpdateBubble
       v-if="updateBubble && !settingsOpen"
@@ -272,7 +279,7 @@ onUnmounted(() => {
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  padding: 8px 14px 12px;
+  padding: 8px 14px 20px;
   overflow: auto;
 }
 
@@ -285,11 +292,28 @@ onUnmounted(() => {
 
 .tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) var(--march-fab-slot) minmax(0, 1fr);
+  align-items: stretch;
   gap: 8px;
-  padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+  padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
   border-top: 4px solid var(--stroke);
   background: var(--gloss), #ffe08a;
+}
+
+.tab-side {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  min-width: 0;
+}
+
+.tab-side.dual {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.tab-slot {
+  width: var(--march-fab-slot);
+  pointer-events: none;
 }
 
 .cr-tab {
