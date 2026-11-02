@@ -34,7 +34,7 @@ function potionReady(unitId: string): boolean {
           </p>
           <template v-if="unit">
             <div class="who">
-              <UnitFace :name="unit.name" size="sm" />
+              <UnitFace :name="unit.name" :general-id="unit.generalId" size="sm" />
               <div>
                 <strong>{{ unit.name }}</strong>
                 <span v-if="unit.potionBoost" class="boost">用药中</span>
@@ -58,7 +58,7 @@ function potionReady(unitId: string): boolean {
         <h3>排队</h3>
         <ol v-if="queueUnits.length">
           <li v-for="unit in queueUnits" :key="unit.id">
-            <UnitFace :name="unit.name" size="sm" />
+            <UnitFace :name="unit.name" :general-id="unit.generalId" size="sm" />
             <span>{{ unit.name }}</span>
             <span class="wait">等床 · {{ Math.round(unit.hp) }}/{{ unit.maxHp }}</span>
           </li>

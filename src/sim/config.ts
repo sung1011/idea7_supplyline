@@ -4,7 +4,7 @@ export const GAME_NAME = '补给线'
 export const GAME_TAGLINE = '为前线战士做后勤补给。'
 
 export const SAVE_KEY = 'idea7Supplyline'
-export const SAVE_VERSION = 3
+export const SAVE_VERSION = 4
 
 export const INITIAL_BED_COUNT = 2
 export const INITIAL_UNIT_COUNT = 4
@@ -55,3 +55,18 @@ export const QUALITY_STAR_COUNT = {
 export const OFFLINE_TICK_CAP_SEC = 8 * 60 * 60
 
 export const UNIT_NAMES = ['冲冲侠', '盾盾仔', '炮炮龙', '豆豆兵'] as const
+
+/** 出征挂机秒数；单人满血满体出发。 */
+export const MARCH_DURATION_SEC = 10
+export const MARCH_STAMINA_COST = 40
+export const MARCH_INJURY_CHANCE = 0.5
+export const MARCH_INJURY_HP = 35
+export const MARCH_SUPPLY_GAIN = 8
+export const MARCH_CAPTURE_BASE = 0.42
+export const MARCH_CAPTURE_POWER_SCALE = 80
+export const MARCH_CAPTURE_MIN = 0.12
+export const MARCH_CAPTURE_MAX = 0.72
+
+/** 劝降挂机秒数 / 成功率，按俘虏擅长 tag。智更快更高。 */
+export const PERSUADE_SEC = { 战: 14, 守: 12, 智: 8 } as const
+export const PERSUADE_RATE = { 战: 0.38, 守: 0.48, 智: 0.62 } as const

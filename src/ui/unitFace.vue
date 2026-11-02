@@ -4,10 +4,11 @@ import { faceTone } from './faceTone'
 
 const props = defineProps<{
   name: string
+  generalId?: string
   size?: 'sm' | 'md'
 }>()
 
-const tone = computed(() => faceTone(props.name))
+const tone = computed(() => faceTone(props.name, props.generalId))
 </script>
 
 <template>

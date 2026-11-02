@@ -4,6 +4,9 @@ export type UnitLocation =
   | 'hospital_queue'
   | 'restaurant_seat'
   | 'restaurant_queue'
+  | 'marching'
+  | 'captive'
+  | 'persuading'
 
 export type DishKind = '粥' | '炒饭' | '烤肉'
 
@@ -22,6 +25,8 @@ export type Rng = () => number
 export type Unit = {
   id: string
   name: string
+  /** 全局唯一名将 id，编制/俘虏/劝降中占用同一 id 则不可再俘。 */
+  generalId: string
   hp: number
   maxHp: number
   stamina: number
@@ -33,6 +38,10 @@ export type Unit = {
   order: DishKind | null
   /** 占座且已上菜后才开始进食。 */
   served: boolean
+  /** 出征 / 劝降剩余秒；非进行中为 0。 */
+  jobRemain: number
+  /** 出征 / 劝降总秒，用来画进度。 */
+  jobTotal: number
 }
 
 export type ShelfStock = Record<DishKind, number>

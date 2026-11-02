@@ -127,6 +127,8 @@ onUnmounted(() => {
       <div v-if="page === 'stats'" class="body">
         <ul class="stats">
           <li>待命 {{ stats.camp }}</li>
+          <li>出征 {{ stats.marching }}</li>
+          <li>押回 {{ stats.captives }}</li>
           <li>医院占床 {{ stats.hospitalBeds }}</li>
           <li>医院排队 {{ stats.hospitalQueue }}</li>
           <li>餐厅占座 {{ stats.restaurantSeats }}</li>

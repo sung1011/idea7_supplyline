@@ -8,6 +8,8 @@ describe('settings layout', () => {
     expect(settings).toContain('border-radius: 50%')
     expect(settings).not.toContain('>关闭</button>')
     expect(settings).toContain('待命 {{ stats.camp }}')
+    expect(settings).toContain('出征 {{ stats.marching }}')
+    expect(settings).toContain('押回 {{ stats.captives }}')
     expect(settings).toContain('医院占床 {{ stats.hospitalBeds }}')
     expect(settings).toContain('医院排队 {{ stats.hospitalQueue }}')
     expect(settings).toContain('餐厅占座 {{ stats.restaurantSeats }}')

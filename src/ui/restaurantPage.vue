@@ -36,7 +36,7 @@ function serveReady(unitId: string): boolean {
           </p>
           <template v-if="unit">
             <div class="who">
-              <UnitFace :name="unit.name" size="sm" />
+              <UnitFace :name="unit.name" :general-id="unit.generalId" size="sm" />
               <div>
                 <strong>{{ unit.name }}</strong>
                 <span v-if="unit.served" class="eating">用餐中</span>
@@ -64,7 +64,7 @@ function serveReady(unitId: string): boolean {
         <h3>排队</h3>
         <ol v-if="restaurantQueueUnits.length">
           <li v-for="unit in restaurantQueueUnits" :key="unit.id">
-            <UnitFace :name="unit.name" size="sm" />
+            <UnitFace :name="unit.name" :general-id="unit.generalId" size="sm" />
             <span>{{ unit.name }}</span>
             <span class="wait">等座 · {{ Math.round(unit.stamina) }}/{{ unit.maxStamina }}</span>
           </li>

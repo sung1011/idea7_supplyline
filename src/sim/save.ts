@@ -10,6 +10,7 @@ import {
   UNIT_MAX_STAMINA,
 } from './config'
 import { createInitialState, createRestaurantState, createShelf, tick } from './game'
+import { getGeneral, resolveGeneralId } from './generals'
 import { createChefWeight, createEmptyShelf, createInitialKitchen } from './kitchen'
 import type {
   ChefWeight,
@@ -31,6 +32,16 @@ const LOCATIONS: ReadonlySet<UnitLocation> = new Set([
   'hospital_queue',
   'restaurant_seat',
   'restaurant_queue',
+  'marching',
+  'captive',
+  'persuading',
+])
+
+const FREE_LOCATIONS: ReadonlySet<UnitLocation> = new Set([
+  'camp',
+  'marching',
+  'captive',
+  'persuading',
 ])
 
 const DISH_SET: ReadonlySet<string> = new Set(DISH_KINDS)
@@ -97,18 +108,32 @@ function parseUnit(value: unknown): Unit | null {
   const stamina = finiteNumber(unit.stamina) ? unit.stamina : maxStamina
   const order = unit.order === null || unit.order === undefined ? null : isDishKind(unit.order) ? unit.order : null
   const served = typeof unit.served === 'boolean' ? unit.served : false
+  const givenId = typeof unit.generalId === 'string' ? unit.generalId : undefined
+  const generalId = resolveGeneralId(unit.name, givenId)
+  if (!generalId) return null
+  const general = getGeneral(generalId)
+  const name = general?.name ?? unit.name
+  const location = unit.location as UnitLocation
+  const busy = location === 'marching' || location === 'persuading'
+  const rawRemain = finiteNumber(unit.jobRemain) && unit.jobRemain > 0 ? unit.jobRemain : 0
+  const rawTotal = finiteNumber(unit.jobTotal) && unit.jobTotal > 0 ? unit.jobTotal : 0
+  const jobRemain = busy ? rawRemain : 0
+  const jobTotal = busy ? (rawTotal > 0 ? rawTotal : Math.max(jobRemain, 1)) : 0
 
   return {
     id: unit.id,
-    name: unit.name,
+    name,
+    generalId,
     hp: unit.hp,
     maxHp: unit.maxHp,
     stamina,
     maxStamina,
-    location: unit.location as UnitLocation,
+    location,
     potionBoost: unit.potionBoost,
     order,
     served,
+    jobRemain,
+    jobTotal,
   }
 }
 
@@ -315,7 +340,7 @@ export function deserialize(raw: unknown): { state: GameState; savedAt: number }
     if (unit.location === 'hospital_queue' && !queue.includes(unit.id)) return null
     if (unit.location === 'restaurant_seat' && !restaurant.tables.includes(unit.id)) return null
     if (unit.location === 'restaurant_queue' && !restaurant.queue.includes(unit.id)) return null
-    if (unit.location === 'camp' && occupied.has(unit.id)) return null
+    if (FREE_LOCATIONS.has(unit.location) && occupied.has(unit.id)) return null
     if (unit.location !== 'restaurant_seat') {
       unit.order = null
       unit.served = false

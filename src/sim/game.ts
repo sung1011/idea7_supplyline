@@ -13,15 +13,32 @@ import {
   INITIAL_TABLE_COUNT,
   INITIAL_UNIT_COUNT,
   INJURE_HP,
+  MARCH_CAPTURE_BASE,
+  MARCH_CAPTURE_MAX,
+  MARCH_CAPTURE_MIN,
+  MARCH_CAPTURE_POWER_SCALE,
+  MARCH_DURATION_SEC,
+  MARCH_INJURY_CHANCE,
+  MARCH_INJURY_HP,
+  MARCH_STAMINA_COST,
+  MARCH_SUPPLY_GAIN,
+  PERSUADE_RATE,
+  PERSUADE_SEC,
   POTION_COST,
   POTION_HEAL_MULTIPLIER,
   RESTOCK_PER_DISH,
   UNIT_MAX_HP,
   UNIT_MAX_STAMINA,
-  UNIT_NAMES,
 } from './config'
+import {
+  capturableGenerals,
+  getGeneral,
+  STARTER_GENERAL_IDS,
+  type General,
+  type GeneralTag,
+} from './generals'
 import { consumeShelfDish, createChefWeight, createEmptyShelf, createInitialKitchen } from './kitchen'
-import type { DishKind, GameState, RestaurantState, ShelfStock, Unit } from './types'
+import type { DishKind, GameState, RestaurantState, Rng, ShelfStock, Unit, UnitLocation } from './types'
 
 export function createShelf(count = INITIAL_SHELF_PER_DISH): ShelfStock {
   return {
@@ -44,22 +61,40 @@ export function createRestaurantState(): RestaurantState {
   }
 }
 
+export function createUnitFromGeneral(
+  id: string,
+  general: General,
+  location: UnitLocation = 'camp',
+): Unit {
+  return {
+    id,
+    name: general.name,
+    generalId: general.id,
+    hp: UNIT_MAX_HP,
+    maxHp: UNIT_MAX_HP,
+    stamina: UNIT_MAX_STAMINA,
+    maxStamina: UNIT_MAX_STAMINA,
+    location,
+    potionBoost: false,
+    order: null,
+    served: false,
+    jobRemain: 0,
+    jobTotal: 0,
+  }
+}
+
+function clearJob(unit: Unit): void {
+  unit.jobRemain = 0
+  unit.jobTotal = 0
+}
+
 export function createInitialState(): GameState {
-  const count = Math.min(INITIAL_UNIT_COUNT, UNIT_NAMES.length)
   const units: Unit[] = []
+  const count = Math.min(INITIAL_UNIT_COUNT, STARTER_GENERAL_IDS.length)
   for (let i = 0; i < count; i++) {
-    units.push({
-      id: `u${i + 1}`,
-      name: UNIT_NAMES[i] ?? `士兵${i + 1}`,
-      hp: UNIT_MAX_HP,
-      maxHp: UNIT_MAX_HP,
-      stamina: UNIT_MAX_STAMINA,
-      maxStamina: UNIT_MAX_STAMINA,
-      location: 'camp',
-      potionBoost: false,
-      order: null,
-      served: false,
-    })
+    const general = getGeneral(STARTER_GENERAL_IDS[i]!)
+    if (!general) continue
+    units.push(createUnitFromGeneral(`u${i + 1}`, general))
   }
   return {
     units,
@@ -67,7 +102,7 @@ export function createInitialState(): GameState {
     queue: [],
     potionCount: INITIAL_POTION_COUNT,
     supply: INITIAL_SUPPLY,
-    nextUnitId: count + 1,
+    nextUnitId: units.length + 1,
     restaurant: createRestaurantState(),
   }
 }
@@ -314,11 +349,165 @@ function tickRestaurant(state: GameState, dt: number): void {
   }
 }
 
-/** 医院占床回血与餐厅占座进食并行；满则离区回营地，空位立刻分给队首。 */
-export function tick(state: GameState, dt: number): void {
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value))
+}
+
+function tagOf(unit: Unit): GeneralTag {
+  return getGeneral(unit.generalId)?.tag ?? '战'
+}
+
+export function persuadeDuration(tag: GeneralTag): number {
+  return PERSUADE_SEC[tag]
+}
+
+export function persuadeSuccessRate(tag: GeneralTag): number {
+  return PERSUADE_RATE[tag]
+}
+
+export function captureChance(attackerPower: number, defenderPower: number): number {
+  const raw = MARCH_CAPTURE_BASE + (attackerPower - defenderPower) / MARCH_CAPTURE_POWER_SCALE
+  return clamp(raw, MARCH_CAPTURE_MIN, MARCH_CAPTURE_MAX)
+}
+
+export function canMarchUnit(state: GameState, unitId: string): boolean {
+  const unit = findUnit(state, unitId)
+  return (
+    !!unit &&
+    unit.location === 'camp' &&
+    unit.hp >= unit.maxHp &&
+    unit.stamina >= unit.maxStamina
+  )
+}
+
+export function canPersuadeUnit(state: GameState, unitId: string): boolean {
+  const unit = findUnit(state, unitId)
+  return !!unit && unit.location === 'captive'
+}
+
+/** 营地选满血满体待命 1 人出征。 */
+export function startMarch(state: GameState, unitId: string): boolean {
+  if (!canMarchUnit(state, unitId)) return false
+  const unit = findUnit(state, unitId)
+  if (!unit) return false
+  unit.location = 'marching'
+  unit.jobTotal = MARCH_DURATION_SEC
+  unit.jobRemain = MARCH_DURATION_SEC
+  return true
+}
+
+/** 对押回俘虏开劝降挂机。失败则释放，不可再劝同一次俘虏。 */
+export function startPersuade(state: GameState, unitId: string): boolean {
+  if (!canPersuadeUnit(state, unitId)) return false
+  const unit = findUnit(state, unitId)
+  if (!unit) return false
+  const duration = persuadeDuration(tagOf(unit))
+  unit.location = 'persuading'
+  unit.jobTotal = duration
+  unit.jobRemain = duration
+  return true
+}
+
+function tryCapture(state: GameState, attacker: Unit, rng: Rng): Unit | null {
+  const pool = capturableGenerals(state)
+  if (pool.length === 0) return null
+  const enemy = pool[Math.floor(rng() * pool.length)]
+  if (!enemy) return null
+  const attackerPower = getGeneral(attacker.generalId)?.power ?? 70
+  if (rng() >= captureChance(attackerPower, enemy.power)) return null
+  const captive = createUnitFromGeneral(`u${state.nextUnitId}`, enemy, 'captive')
+  state.nextUnitId += 1
+  state.units.push(captive)
+  return captive
+}
+
+function resolveMarch(state: GameState, unit: Unit, rng: Rng): void {
+  unit.stamina = Math.max(0, unit.stamina - MARCH_STAMINA_COST)
+  const injured = rng() < MARCH_INJURY_CHANCE
+  if (injured) unit.hp = Math.max(1, unit.maxHp - MARCH_INJURY_HP)
+  state.supply += MARCH_SUPPLY_GAIN
+  tryCapture(state, unit, rng)
+  clearJob(unit)
+  if (injured) {
+    unit.stamina = unit.maxStamina
+    admitHospital(state, unit)
+    return
+  }
+  if (unit.stamina < unit.maxStamina) {
+    admitRestaurant(state, unit)
+    return
+  }
+  unit.location = 'camp'
+}
+
+function removeUnit(state: GameState, unitId: string): void {
+  const index = state.units.findIndex((item) => item.id === unitId)
+  if (index >= 0) state.units.splice(index, 1)
+}
+
+function resolvePersuade(state: GameState, unit: Unit, rng: Rng): void {
+  const success = rng() < persuadeSuccessRate(tagOf(unit))
+  clearJob(unit)
+  if (success) {
+    unit.location = 'camp'
+    unit.hp = unit.maxHp
+    unit.stamina = unit.maxStamina
+    unit.potionBoost = false
+    unit.order = null
+    unit.served = false
+    return
+  }
+  removeUnit(state, unit.id)
+}
+
+function resolveDueJobs(state: GameState, rng: Rng): void {
+  const due = state.units.filter(
+    (unit) =>
+      (unit.location === 'marching' || unit.location === 'persuading') && unit.jobRemain <= 0,
+  )
+  for (const unit of due) {
+    if (unit.location === 'marching') resolveMarch(state, unit, rng)
+    else if (unit.location === 'persuading') resolvePersuade(state, unit, rng)
+  }
+}
+
+function nextJobRemain(state: GameState): number | null {
+  let next: number | null = null
+  for (const unit of state.units) {
+    if (unit.location !== 'marching' && unit.location !== 'persuading') continue
+    if (unit.jobRemain <= 0) return 0
+    next = next === null ? unit.jobRemain : Math.min(next, unit.jobRemain)
+  }
+  return next
+}
+
+/** 出征/劝降与医院餐厅并行；任务结束的剩余时间才进入补给区，避免同一段 dt 结算两次。 */
+export function tick(state: GameState, dt: number, rng: Rng = Math.random): void {
   if (!Number.isFinite(dt) || dt <= 0) return
-  tickHospital(state, dt)
-  tickRestaurant(state, dt)
+  let remaining = dt
+  while (remaining > 0) {
+    resolveDueJobs(state, rng)
+    const untilJob = nextJobRemain(state)
+    if (untilJob === null) {
+      tickHospital(state, remaining)
+      tickRestaurant(state, remaining)
+      return
+    }
+    const slice = Math.min(remaining, untilJob)
+    if (slice <= 0) {
+      resolveDueJobs(state, rng)
+      if (nextJobRemain(state) === 0) break
+      continue
+    }
+    for (const unit of state.units) {
+      if (unit.location !== 'marching' && unit.location !== 'persuading') continue
+      unit.jobRemain -= slice
+    }
+    tickHospital(state, slice)
+    tickRestaurant(state, slice)
+    remaining -= slice
+  }
+  resolveDueJobs(state, rng)
 }
 
 /** 从营地选一个满血待命兵，hp 设为造伤值并送医院。 */

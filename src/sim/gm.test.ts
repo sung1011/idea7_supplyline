@@ -13,7 +13,13 @@ import {
   UNIT_MAX_HP,
   UNIT_MAX_STAMINA,
 } from './config'
-import { createInitialState, expandBed, injureAndSendToHospital, starveAndSendToRestaurant } from './game'
+import {
+  createInitialState,
+  expandBed,
+  injureAndSendToHospital,
+  startMarch,
+  starveAndSendToRestaurant,
+} from './game'
 import {
   GM_COARSE_GRANT,
   GM_POTION_GRANT,
@@ -38,6 +44,8 @@ describe('snapshot stats', () => {
     expect(starveAndSendToRestaurant(state)).toBe(true)
     const stats = snapshotStats(state)
     expect(stats.camp).toBe(0)
+    expect(stats.marching).toBe(0)
+    expect(stats.captives).toBe(0)
     expect(stats.hospitalBeds).toBe(INITIAL_BED_COUNT)
     expect(stats.hospitalQueue).toBe(1)
     expect(stats.restaurantSeats).toBe(INITIAL_TABLE_COUNT)
@@ -128,5 +136,26 @@ describe('GM', () => {
     expect(state.queue).toEqual([])
     expect(state.restaurant.tables.every((id) => id === null)).toBe(true)
     expect(state.restaurant.queue).toEqual([])
+  })
+
+  it('recalls marching generals but keeps captives', () => {
+    const state = createInitialState()
+    const unit = state.units[0]!
+    expect(startMarch(state, unit.id)).toBe(true)
+    state.units.push({
+      ...unit,
+      id: 'cap1',
+      name: '曹操',
+      generalId: 'caocao',
+      location: 'persuading',
+      jobRemain: 3,
+      jobTotal: 8,
+    })
+    gmRecallAll(state)
+    expect(unit.location).toBe('camp')
+    expect(unit.jobRemain).toBe(0)
+    const captive = state.units.find((item) => item.id === 'cap1')
+    expect(captive?.location).toBe('captive')
+    expect(captive?.jobRemain).toBe(0)
   })
 })

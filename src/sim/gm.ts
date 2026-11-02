@@ -11,6 +11,8 @@ export const GM_COARSE_GRANT = 5
 
 export type GameSnapshotStats = {
   camp: number
+  marching: number
+  captives: number
   hospitalBeds: number
   hospitalQueue: number
   restaurantSeats: number
@@ -26,6 +28,10 @@ export type GameSnapshotStats = {
 export function snapshotStats(state: GameState): GameSnapshotStats {
   return {
     camp: state.units.filter((unit) => unit.location === 'camp').length,
+    marching: state.units.filter((unit) => unit.location === 'marching').length,
+    captives: state.units.filter(
+      (unit) => unit.location === 'captive' || unit.location === 'persuading',
+    ).length,
     hospitalBeds: state.beds.filter(Boolean).length,
     hospitalQueue: state.queue.length,
     restaurantSeats: state.restaurant.tables.filter(Boolean).length,
@@ -58,15 +64,21 @@ export function gmAddShelfEach(state: GameState, amount = GM_SHELF_GRANT): void 
   }
 }
 
-/** 全员满血满体力回营地，清医院床位/排队和餐厅占座/排队，不改床数桌数。 */
+/** 全员满血满体力回营地，清医院床位/排队和餐厅占座/排队，不改床数桌数。俘虏仍押回，劝降中断。 */
 export function gmRecallAll(state: GameState): void {
   for (const unit of state.units) {
     unit.hp = unit.maxHp > 0 ? unit.maxHp : UNIT_MAX_HP
     unit.stamina = unit.maxStamina > 0 ? unit.maxStamina : UNIT_MAX_STAMINA
-    unit.location = 'camp'
     unit.potionBoost = false
     unit.order = null
     unit.served = false
+    unit.jobRemain = 0
+    unit.jobTotal = 0
+    if (unit.location === 'captive' || unit.location === 'persuading') {
+      unit.location = 'captive'
+      continue
+    }
+    unit.location = 'camp'
   }
   for (let i = 0; i < state.beds.length; i++) state.beds[i] = null
   state.queue.length = 0

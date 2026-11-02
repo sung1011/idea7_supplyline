@@ -6,12 +6,16 @@ import {
   canExpandBed,
   canExpandTable,
   canInjure,
+  canMarchUnit,
+  canPersuadeUnit,
   canStarve,
   expandBed,
   expandTable,
   injureAndSendToHospital,
   restockShelf,
   serveDish,
+  startMarch,
+  startPersuade,
   starveAndSendToRestaurant,
   tick,
 } from '../sim/game'
@@ -42,6 +46,10 @@ export const useGameStore = defineStore('game', () => {
   const tab = ref<MainTab>('camp')
 
   const campUnits = computed(() => game.units.filter((unit) => unit.location === 'camp'))
+  const marchingUnits = computed(() => game.units.filter((unit) => unit.location === 'marching'))
+  const captiveUnits = computed(() =>
+    game.units.filter((unit) => unit.location === 'captive' || unit.location === 'persuading'),
+  )
   const queueUnits = computed(() =>
     game.queue
       .map((id) => game.units.find((unit) => unit.id === id))
@@ -78,6 +86,34 @@ export const useGameStore = defineStore('game', () => {
     const ok = starveAndSendToRestaurant(game)
     if (ok) persist()
     return ok
+  }
+
+  function marchUnit(unitId: string): boolean {
+    const ok = startMarch(game, unitId)
+    if (ok) {
+      persist()
+      const unit = game.units.find((item) => item.id === unitId)
+      if (unit) pushFloatTip(`${unit.name} 出征`, 'ok')
+    }
+    return ok
+  }
+
+  function persuadeUnit(unitId: string): boolean {
+    const ok = startPersuade(game, unitId)
+    if (ok) {
+      persist()
+      const unit = game.units.find((item) => item.id === unitId)
+      if (unit) pushFloatTip(`劝降 ${unit.name}`, 'ok')
+    }
+    return ok
+  }
+
+  function marchReady(unitId: string): boolean {
+    return canMarchUnit(game, unitId)
+  }
+
+  function persuadeReady(unitId: string): boolean {
+    return canPersuadeUnit(game, unitId)
   }
 
   function usePotion(unitId: string): boolean {
@@ -210,6 +246,8 @@ export const useGameStore = defineStore('game', () => {
     game,
     tab,
     campUnits,
+    marchingUnits,
+    captiveUnits,
     queueUnits,
     bedUnits,
     tableUnits,
@@ -221,6 +259,10 @@ export const useGameStore = defineStore('game', () => {
     reservedOrders,
     sendInjured,
     sendHungry,
+    marchUnit,
+    persuadeUnit,
+    marchReady,
+    persuadeReady,
     usePotion,
     serveMeal,
     buyBed,

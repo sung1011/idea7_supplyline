@@ -21,6 +21,20 @@ describe('单位大头色板', () => {
     expect(a.ring).toMatch(/^#/)
   })
 
+  it('名将按阵营给头盔 tint，同 id 稳定', () => {
+    const shu = faceTone('刘备', 'liubei')
+    const wei = faceTone('曹操', 'caocao')
+    const wu = faceTone('周瑜', 'zhouyu')
+    const other = faceTone('吕布', 'lvbu')
+    expect(shu.hat).toBe('#e4453a')
+    expect(wei.hat).toBe('#3d7dff')
+    expect(wu.hat).toBe('#2fbf4a')
+    expect(other.hat).toBe('#9b4dff')
+    expect(faceTone('关羽', 'guanyu')).toEqual(faceTone('关羽', 'guanyu'))
+    expect(shu.kind).toBe('cap')
+    expect(other.kind).toBe('horn')
+  })
+
   it('md 大头约 64px，壳只用渐变高光不加噪点', () => {
     expect(face).toContain('width: 64px')
     expect(face).toContain('height: 64px')
