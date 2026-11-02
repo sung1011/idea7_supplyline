@@ -18,7 +18,7 @@ describe('settings layout', () => {
     expect(settings).toContain('桌数 {{ stats.tableCount }}')
     expect(settings).toContain('补给 {{ stats.supply }}')
     expect(settings).toContain('药剂 {{ stats.potionCount }}')
-    expect(settings).toContain('货架合计 {{ stats.shelfTotal }}')
+    expect(settings).toContain('菜单库存 {{ stats.shelfTotal }}')
     expect(settings).toContain('材料栏 {{ stats.kitchenCount }}')
   })
 
@@ -42,7 +42,7 @@ describe('settings layout', () => {
     expect(settings).toContain('class="ver-card"')
     expect(settings).toContain('class="refresh wide"')
     expect(settings).toContain('<button v-else type="button" class="wide"')
-    const labels = ['初始化', '加补给 +50', '加药 +5', '货架三种各 +5', '发粗料', '全员回营']
+    const labels = ['初始化', '加补给 +50', '加药 +5', '菜单三类各 +5', '发粗料', '全员回营']
     const at = labels.map((label) => settings.indexOf(label))
     expect(at.every((index) => index > 0)).toBe(true)
     expect([...at].sort((a, b) => a - b)).toEqual(at)

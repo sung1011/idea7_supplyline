@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { DISH_KINDS, EXPAND_TABLE_COST } from '../sim/config'
+import { EXPAND_TABLE_COST, MENU_CATS } from '../sim/config'
 import { canServeDish } from '../sim/game'
+import { canSwapMenuDish, dishName } from '../sim/menu'
 import { useGameStore } from '../store/gameStore'
 import CrIcon from './crIcon.vue'
 import DishMark from './dishMark.vue'
@@ -15,6 +16,10 @@ const { tableUnits, restaurantQueueUnits, expandTableReady, game, reservedOrders
 function serveReady(unitId: string): boolean {
   return canServeDish(store.game, unitId)
 }
+
+function swapReady(cat: (typeof MENU_CATS)[number]): boolean {
+  return canSwapMenuDish(store.game, cat)
+}
 </script>
 
 <template>
@@ -24,7 +29,7 @@ function serveReady(unitId: string): boolean {
         <span class="scene-mark rest-mark"><CrIcon name="plate" /></span>
         <div>
           <h2 class="rest-ink">餐厅</h2>
-          <p class="rest-mute">占座点餐，货架有菜才能上桌。吃完回营地，没座就排队。</p>
+          <p class="rest-mute">占座按饭→菜→酒轮询当前菜单。有库存才能上桌，吃完回营地，没座就排队。</p>
         </div>
       </header>
 
@@ -43,8 +48,8 @@ function serveReady(unitId: string): boolean {
               </div>
             </div>
             <span v-if="unit.order" class="order">
-              <DishMark :kind="unit.order" />
-              {{ unit.order }}
+              <DishMark :mark="unit.order" />
+              {{ dishName(unit.order) }}
             </span>
             <StaminaBar :stamina="unit.stamina" :max-stamina="unit.maxStamina" />
             <button
@@ -72,14 +77,26 @@ function serveReady(unitId: string): boolean {
         <p v-else class="idle">没有人排队</p>
       </section>
 
-      <section class="shelf" aria-label="货架">
-        <h3>货架</h3>
+      <section class="menu" aria-label="菜单">
+        <h3>菜单</h3>
         <ul class="slots">
-          <li v-for="kind in DISH_KINDS" :key="kind" class="slot">
-            <DishMark :kind="kind" :stars="Math.max(1, game.restaurant.shelfStar[kind] || 1)" />
-            <strong>{{ kind }}</strong>
-            <b class="count">×{{ game.restaurant.shelf[kind] }}</b>
-            <small v-if="reservedOrders[kind] > 0" class="hold">订单预留 {{ reservedOrders[kind] }}</small>
+          <li v-for="cat in MENU_CATS" :key="cat" class="slot">
+            <span class="cat-tag">{{ cat }}</span>
+            <DishMark
+              :mark="game.restaurant.menu[cat].dishId"
+              :stars="game.restaurant.menu[cat].star > 0 ? game.restaurant.menu[cat].star : undefined"
+            />
+            <strong>{{ dishName(game.restaurant.menu[cat].dishId) }}</strong>
+            <b class="count">×{{ game.restaurant.menu[cat].stock }}</b>
+            <small v-if="reservedOrders[cat] > 0" class="hold">订单预留 {{ reservedOrders[cat] }}</small>
+            <button
+              class="cr-btn cream sm swap"
+              type="button"
+              :disabled="!swapReady(cat)"
+              @click="store.swapMenu(cat)"
+            >
+              换菜
+            </button>
           </li>
         </ul>
       </section>
@@ -87,7 +104,7 @@ function serveReady(unitId: string): boolean {
       <button class="cr-btn gold" type="button" :disabled="!expandTableReady" @click="store.buyTable()">
         扩桌（{{ EXPAND_TABLE_COST }} 补给）
       </button>
-      <button class="cr-btn cream" type="button" @click="store.restock()">货架补货</button>
+      <button class="cr-btn cream" type="button" @click="store.restock()">菜单补货</button>
     </div>
 
     <KitchenPanel />
@@ -109,7 +126,7 @@ function serveReady(unitId: string): boolean {
 
 .rest-ink,
 .queue h3,
-.shelf h3 {
+.menu h3 {
   color: var(--restaurant-ink);
   font-weight: 900;
 }
@@ -149,7 +166,7 @@ function serveReady(unitId: string): boolean {
 .table-title,
 .idle,
 .queue h3,
-.shelf h3 {
+.menu h3 {
   font-size: 14px;
 }
 
@@ -208,7 +225,7 @@ function serveReady(unitId: string): boolean {
 }
 
 .queue,
-.shelf {
+.menu {
   padding: 12px;
   border: var(--border) solid var(--stroke);
   border-radius: var(--radius-card);
@@ -217,7 +234,7 @@ function serveReady(unitId: string): boolean {
 }
 
 .queue h3,
-.shelf h3 {
+.menu h3 {
   margin: 0;
 }
 
@@ -266,6 +283,15 @@ function serveReady(unitId: string): boolean {
   font-size: 13px;
 }
 
+.cat-tag {
+  padding: 1px 8px;
+  border: 3px solid var(--stroke);
+  border-radius: 999px;
+  background: #fff8dc;
+  font-size: 11px;
+  font-weight: 900;
+}
+
 .count,
 .hold {
   min-width: 36px;
@@ -281,5 +307,10 @@ function serveReady(unitId: string): boolean {
 .hold {
   background: #ffd0a0;
   font-size: 10px;
+}
+
+.swap {
+  width: 100%;
+  margin-top: 2px;
 }
 </style>

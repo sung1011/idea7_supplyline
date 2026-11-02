@@ -1,14 +1,13 @@
 import {
   BASE_HEAL_PER_SEC,
-  DISH_KINDS,
   EAT_PER_SEC,
+  EAT_WINE_PER_SEC,
   EXPAND_BED_COST,
   EXPAND_TABLE_COST,
   HUNGER_STAMINA,
   INITIAL_BED_COUNT,
   INITIAL_KITCHEN_COUNT,
   INITIAL_POTION_COUNT,
-  INITIAL_SHELF_PER_DISH,
   INITIAL_SUPPLY,
   INITIAL_TABLE_COUNT,
   INITIAL_UNIT_COUNT,
@@ -22,6 +21,7 @@ import {
   MARCH_INJURY_HP,
   MARCH_STAMINA_COST,
   MARCH_SUPPLY_GAIN,
+  MENU_CATS,
   PERSUADE_RATE,
   PERSUADE_SEC,
   POTION_COST,
@@ -37,23 +37,15 @@ import {
   type General,
   type GeneralTag,
 } from './generals'
-import { consumeShelfDish, createChefWeight, createEmptyShelf, createInitialKitchen } from './kitchen'
-import type { DishKind, GameState, RestaurantState, Rng, ShelfStock, Unit, UnitLocation } from './types'
-
-export function createShelf(count = INITIAL_SHELF_PER_DISH): ShelfStock {
-  return {
-    粥: count,
-    炒饭: count,
-    烤肉: count,
-  }
-}
+import { createChefWeight, createInitialKitchen } from './kitchen'
+import { catOfDish, consumeMenuStock, createMenu, menuStockOfOrder, takeNextMenuDish } from './menu'
+import type { GameState, RestaurantState, Rng, Unit, UnitLocation } from './types'
 
 export function createRestaurantState(): RestaurantState {
   return {
     tables: Array.from({ length: INITIAL_TABLE_COUNT }, () => null),
     queue: [],
-    shelf: createShelf(),
-    shelfStar: createEmptyShelf(),
+    menu: createMenu(),
     nextDishIndex: 0,
     kitchen: createInitialKitchen(),
     nextIngredientId: INITIAL_KITCHEN_COUNT + 1,
@@ -148,7 +140,7 @@ export function canServeDish(state: GameState, unitId: string): boolean {
     unit.location === 'restaurant_seat' &&
     !unit.served &&
     !!unit.order &&
-    (state.restaurant.shelf[unit.order] ?? 0) > 0
+    menuStockOfOrder(state, unit.order) > 0
   )
 }
 
@@ -160,16 +152,15 @@ function firstEmptyTable(state: GameState): number {
   return state.restaurant.tables.findIndex((id) => id === null)
 }
 
-function nextDish(state: GameState): DishKind {
-  const kind = DISH_KINDS[state.restaurant.nextDishIndex % DISH_KINDS.length] ?? DISH_KINDS[0]
-  state.restaurant.nextDishIndex += 1
-  return kind
+function eatRate(unit: Unit): number {
+  if (unit.order && catOfDish(unit.order) === '酒') return EAT_WINE_PER_SEC
+  return EAT_PER_SEC
 }
 
 function seatAndOrder(state: GameState, unit: Unit, tableIndex: number): void {
   state.restaurant.tables[tableIndex] = unit.id
   unit.location = 'restaurant_seat'
-  unit.order = nextDish(state)
+  unit.order = takeNextMenuDish(state.restaurant)
   unit.served = false
 }
 
@@ -327,13 +318,14 @@ function tickRestaurant(state: GameState, dt: number): void {
 
     let slice = remaining
     for (const unit of eaters) {
-      if (EAT_PER_SEC <= 0) continue
+      const rate = eatRate(unit)
+      if (rate <= 0) continue
       const need = unit.maxStamina - unit.stamina
       if (need <= 0) {
         slice = 0
         break
       }
-      slice = Math.min(slice, need / EAT_PER_SEC)
+      slice = Math.min(slice, need / rate)
     }
 
     if (slice <= 0) {
@@ -342,7 +334,7 @@ function tickRestaurant(state: GameState, dt: number): void {
     }
 
     for (const unit of eaters) {
-      unit.stamina = Math.min(unit.maxStamina, unit.stamina + EAT_PER_SEC * slice)
+      unit.stamina = Math.min(unit.maxStamina, unit.stamina + eatRate(unit) * slice)
     }
     remaining -= slice
     leaveFull(state)
@@ -541,20 +533,20 @@ export function applyPotion(state: GameState, unitId: string): boolean {
   return true
 }
 
-/** 占座且货架有对应菜时上菜：扣库存并开始进食。 */
+/** 占座且对应类当前菜单有库存时上菜：扣该类库存并开始进食。 */
 export function serveDish(state: GameState, unitId: string): boolean {
   if (!canServeDish(state, unitId)) return false
   const unit = findUnit(state, unitId)
   if (!unit || !unit.order) return false
-  consumeShelfDish(state, unit.order)
+  consumeMenuStock(state, catOfDish(unit.order))
   unit.served = true
   return true
 }
 
-/** 调试：每种菜库存各加 RESTOCK_PER_DISH。 */
+/** 调试：三类当前上架菜库存各加 RESTOCK_PER_DISH。 */
 export function restockShelf(state: GameState): void {
-  for (const kind of DISH_KINDS) {
-    state.restaurant.shelf[kind] += RESTOCK_PER_DISH
+  for (const cat of MENU_CATS) {
+    state.restaurant.menu[cat].stock += RESTOCK_PER_DISH
   }
 }
 

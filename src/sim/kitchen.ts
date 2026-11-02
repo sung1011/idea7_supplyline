@@ -1,36 +1,25 @@
 import {
   CHEF_WEIGHT_STEP,
   DEFAULT_CHEF_WEIGHT,
-  DISH_KINDS,
   INITIAL_KITCHEN_COUNT,
   KITCHEN_SLOT_MAX,
+  MENU_CATS,
   NEXT_QUALITY,
   QUALITY_STAR_COUNT,
 } from './config'
+import { addMenuStock, catOfDish, createCatCounts } from './menu'
 import type {
+  CatCount,
   ChefWeight,
-  DishKind,
   GameState,
   Ingredient,
   IngredientQuality,
+  MenuCat,
   Rng,
-  ShelfStock,
 } from './types'
 
 export function createChefWeight(value = DEFAULT_CHEF_WEIGHT): ChefWeight {
-  return {
-    粥: value,
-    炒饭: value,
-    烤肉: value,
-  }
-}
-
-export function createEmptyShelf(): ShelfStock {
-  return {
-    粥: 0,
-    炒饭: 0,
-    烤肉: 0,
-  }
+  return createCatCounts(value)
 }
 
 export function createInitialKitchen(): Ingredient[] {
@@ -38,26 +27,26 @@ export function createInitialKitchen(): Ingredient[] {
   for (let i = 0; i < INITIAL_KITCHEN_COUNT; i++) {
     items.push({
       id: `m${i + 1}`,
-      kind: DISH_KINDS[i % DISH_KINDS.length] ?? DISH_KINDS[0],
+      kind: MENU_CATS[i % MENU_CATS.length] ?? MENU_CATS[0],
       quality: '粗料',
     })
   }
   return items
 }
 
-export function pickWeightedDish(weights: ChefWeight, rng: Rng = Math.random): DishKind {
-  const totals = DISH_KINDS.map((kind) => Math.max(0, weights[kind] ?? 0))
+export function pickWeightedCat(weights: ChefWeight, rng: Rng = Math.random): MenuCat {
+  const totals = MENU_CATS.map((cat) => Math.max(0, weights[cat] ?? 0))
   const sum = totals.reduce((acc, value) => acc + value, 0)
   if (sum <= 0) {
-    const index = Math.min(DISH_KINDS.length - 1, Math.max(0, Math.floor(rng() * DISH_KINDS.length)))
-    return DISH_KINDS[index] ?? DISH_KINDS[0]
+    const index = Math.min(MENU_CATS.length - 1, Math.max(0, Math.floor(rng() * MENU_CATS.length)))
+    return MENU_CATS[index] ?? MENU_CATS[0]
   }
   let roll = rng() * sum
-  for (let i = 0; i < DISH_KINDS.length; i++) {
+  for (let i = 0; i < MENU_CATS.length; i++) {
     roll -= totals[i] ?? 0
-    if (roll < 0) return DISH_KINDS[i] ?? DISH_KINDS[0]
+    if (roll < 0) return MENU_CATS[i] ?? MENU_CATS[0]
   }
-  return DISH_KINDS[DISH_KINDS.length - 1] ?? DISH_KINDS[0]
+  return MENU_CATS[MENU_CATS.length - 1] ?? MENU_CATS[0]
 }
 
 export function findIngredient(state: GameState, id: string): Ingredient | undefined {
@@ -79,17 +68,18 @@ export function canGrantCoarse(state: GameState): boolean {
   return state.restaurant.kitchen.length < KITCHEN_SLOT_MAX
 }
 
-export function reservedOrderCounts(state: GameState): ShelfStock {
-  const reserved = createEmptyShelf()
+export function reservedOrderCounts(state: GameState): CatCount {
+  const reserved = createCatCounts(0)
   for (const id of state.restaurant.tables) {
     if (!id) continue
     const unit = state.units.find((item) => item.id === id)
-    if (unit?.order && !unit.served) reserved[unit.order] += 1
+    if (!unit?.order || unit.served) continue
+    reserved[catOfDish(unit.order)] += 1
   }
   return reserved
 }
 
-function pushIngredient(state: GameState, kind: DishKind, quality: IngredientQuality): Ingredient {
+function pushIngredient(state: GameState, kind: MenuCat, quality: IngredientQuality): Ingredient {
   const item: Ingredient = {
     id: `m${state.restaurant.nextIngredientId}`,
     kind,
@@ -107,7 +97,7 @@ function removeIngredient(state: GameState, id: string): Ingredient | null {
   return item ?? null
 }
 
-/** 同档两件合成更高一档（精品再 merge 仍为精品），种类按厨师权重随机。只动材料栏。 */
+/** 同档两件合成更高一档（精品再 merge 仍为精品），种类按厨师三类权重随机。只动材料栏。 */
 export function mergeIngredients(
   state: GameState,
   idA: string,
@@ -118,29 +108,17 @@ export function mergeIngredients(
   const a = findIngredient(state, idA)
   if (!a) return false
   const quality = NEXT_QUALITY[a.quality]
-  const kind = pickWeightedDish(state.restaurant.chefWeight, rng)
+  const kind = pickWeightedCat(state.restaurant.chefWeight, rng)
   if (!removeIngredient(state, idA) || !removeIngredient(state, idB)) return false
   pushIngredient(state, kind, quality)
   return true
 }
 
-function addToShelf(state: GameState, kind: DishKind, quality: IngredientQuality): void {
-  state.restaurant.shelf[kind] += 1
-  if (QUALITY_STAR_COUNT[quality] > 0) state.restaurant.shelfStar[kind] += 1
-}
-
-export function consumeShelfDish(state: GameState, kind: DishKind): void {
-  state.restaurant.shelf[kind] = Math.max(0, state.restaurant.shelf[kind] - 1)
-  if (state.restaurant.shelfStar[kind] > state.restaurant.shelf[kind]) {
-    state.restaurant.shelfStar[kind] = state.restaurant.shelf[kind]
-  }
-}
-
-/** 材料栏任一件做成菜：耗掉该材料，货架对应种类 +1。高品质打星标。 */
+/** 材料栏任一件做成菜：耗掉该材料，写入该 cat 当前上架菜库存。高品质打星标。 */
 export function cookIngredient(state: GameState, id: string): boolean {
   const item = removeIngredient(state, id)
   if (!item) return false
-  addToShelf(state, item.kind, item.quality)
+  addMenuStock(state, item.kind, QUALITY_STAR_COUNT[item.quality])
   return true
 }
 
@@ -172,11 +150,11 @@ export function cookByChefPreference(state: GameState, rng: Rng = Math.random): 
 /** 调试：发一份随机种类粗料；栏满拒绝。 */
 export function grantCoarse(state: GameState, rng: Rng = Math.random): boolean {
   if (!canGrantCoarse(state)) return false
-  const kind = pickWeightedDish(createChefWeight(1), rng)
+  const kind = pickWeightedCat(createChefWeight(1), rng)
   pushIngredient(state, kind, '粗料')
   return true
 }
 
-export function boostChefWeight(state: GameState, kind: DishKind): void {
-  state.restaurant.chefWeight[kind] += CHEF_WEIGHT_STEP
+export function boostChefWeight(state: GameState, cat: MenuCat): void {
+  state.restaurant.chefWeight[cat] += CHEF_WEIGHT_STEP
 }

@@ -1,4 +1,4 @@
-import { DISH_KINDS, UNIT_MAX_HP, UNIT_MAX_STAMINA } from './config'
+import { MENU_CATS, UNIT_MAX_HP, UNIT_MAX_STAMINA } from './config'
 import { createInitialState } from './game'
 import { grantCoarse } from './kitchen'
 import { assignGameState } from './save'
@@ -40,7 +40,7 @@ export function snapshotStats(state: GameState): GameSnapshotStats {
     tableCount: state.restaurant.tables.length,
     supply: Math.floor(state.supply),
     potionCount: Math.floor(state.potionCount),
-    shelfTotal: DISH_KINDS.reduce((sum, kind) => sum + (state.restaurant.shelf[kind] ?? 0), 0),
+    shelfTotal: MENU_CATS.reduce((sum, cat) => sum + (state.restaurant.menu[cat].stock ?? 0), 0),
     kitchenCount: state.restaurant.kitchen.length,
   }
 }
@@ -59,8 +59,8 @@ export function gmAddPotion(state: GameState, amount = GM_POTION_GRANT): void {
 
 export function gmAddShelfEach(state: GameState, amount = GM_SHELF_GRANT): void {
   const qty = Math.max(0, Math.floor(amount))
-  for (const kind of DISH_KINDS) {
-    state.restaurant.shelf[kind] += qty
+  for (const cat of MENU_CATS) {
+    state.restaurant.menu[cat].stock += qty
   }
 }
 

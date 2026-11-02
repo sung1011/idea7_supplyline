@@ -35,9 +35,10 @@ import {
   mergeIngredients,
   reservedOrderCounts,
 } from '../sim/kitchen'
+import { swapMenuDish } from '../sim/menu'
 import { clearGameSave, loadGame, saveGame } from '../sim/save'
 import { pushFloatTip } from '../ui/floatTips'
-import type { DishKind, Unit } from '../sim/types'
+import type { MenuCat, Unit } from '../sim/types'
 
 export type MainTab = 'camp' | 'hospital' | 'restaurant'
 
@@ -181,9 +182,15 @@ export const useGameStore = defineStore('game', () => {
     return ok
   }
 
-  function preferDish(kind: DishKind): void {
-    boostChefWeight(game, kind)
+  function preferDish(cat: MenuCat): void {
+    boostChefWeight(game, cat)
     persist()
+  }
+
+  function swapMenu(cat: MenuCat): boolean {
+    const ok = swapMenuDish(game, cat)
+    if (ok) persist()
+    return ok
   }
 
   function gmReset(): void {
@@ -288,10 +295,11 @@ export const useGameStore = defineStore('game', () => {
     cookPreferred,
     giveCoarse,
     preferDish,
+    swapMenu,
     gmReset,
     gmAddSupply: () => runGm(() => gmAddSupply(game), '补给 +50'),
     gmAddPotion: () => runGm(() => gmAddPotion(game), '药剂 +5'),
-    gmAddShelf: () => runGm(() => gmAddShelfEach(game), '货架各 +5'),
+    gmAddShelf: () => runGm(() => gmAddShelfEach(game), '菜单各 +5'),
     gmRecallAll: () => runGm(() => gmRecallAll(game), '全员回营'),
     gmGrantCoarse: () => {
       const granted = gmGrantCoarse(game)

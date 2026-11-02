@@ -2,12 +2,24 @@ import type { AppVersionInfo } from '../ui/appVersion'
 
 /** 构建脚本写入，勿手改。 */
 export const APP_VERSION: AppVersionInfo = {
-  "version": "8c93f2c",
-  "sha": "8c93f2cddf4ba7f42421d187a14c3a20ca789de2",
-  "releasedAt": "2026-10-30T17:33:58+00:00",
+  "version": "5d8684e",
+  "sha": "5d8684edc827da193bc992cb1481c1ff02006d63",
+  "releasedAt": "2026-11-02T09:50:40+00:00",
   "notes": [
     {
-      "at": "2026-10-30T17:33:58+00:00",
+      "at": "2026-11-02T09:50:40+00:00",
+      "title": "玩法：底栏正中出征圆钮"
+    },
+    {
+      "at": "2026-11-02T00:53:17+00:00",
+      "title": "玩法：名将出征与劝降最小闭环"
+    },
+    {
+      "at": "2026-10-31T01:10:44+00:00",
+      "title": "美术：壳与大头质感提质"
+    },
+    {
+      "at": "2026-10-30T17:34:27+00:00",
       "title": "美术：CR极卡通CSS与内联SVG壳"
     },
     {
@@ -33,14 +45,6 @@ export const APP_VERSION: AppVersionInfo = {
     {
       "at": "2026-10-30T10:47:41+00:00",
       "title": "重写主策划：独立新游补给线的完整中文设定"
-    },
-    {
-      "at": "2026-10-30T09:50:24+00:00",
-      "title": "搭补给线工程骨架，对齐 idle 的 Vue Vite PWA"
-    },
-    {
-      "at": "2026-10-30T17:47:03+08:00",
-      "title": "Initial commit"
     }
   ]
 }

@@ -137,7 +137,7 @@ onUnmounted(() => {
           <li>桌数 {{ stats.tableCount }}</li>
           <li>补给 {{ stats.supply }}</li>
           <li>药剂 {{ stats.potionCount }}</li>
-          <li>货架合计 {{ stats.shelfTotal }}</li>
+          <li>菜单库存 {{ stats.shelfTotal }}</li>
           <li>材料栏 {{ stats.kitchenCount }}</li>
         </ul>
       </div>
@@ -274,7 +274,7 @@ onUnmounted(() => {
           <div class="gm-grid">
             <button type="button" @click="store.gmAddSupply()">加补给 +50</button>
             <button type="button" @click="store.gmAddPotion()">加药 +5</button>
-            <button type="button" @click="store.gmAddShelf()">货架三种各 +5</button>
+            <button type="button" @click="store.gmAddShelf()">菜单三类各 +5</button>
             <button type="button" @click="store.gmGrantCoarse()">发粗料</button>
           </div>
         </section>

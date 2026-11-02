@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { DISH_KINDS, KITCHEN_SLOT_MAX, QUALITY_STAR_COUNT } from '../sim/config'
+import { KITCHEN_SLOT_MAX, MENU_CATS, QUALITY_STAR_COUNT } from '../sim/config'
 import { canCookIngredient, canGrantCoarse, canMerge } from '../sim/kitchen'
 import { useGameStore } from '../store/gameStore'
 import type { Ingredient, IngredientQuality } from '../sim/types'
@@ -85,7 +85,7 @@ function doPreferCook(): void {
       <span class="scene-mark rest-mark"><CrIcon name="crate" /></span>
       <div>
         <h3 class="rest-ink">后厨</h3>
-        <p class="rest-mute">点选同档两件 merge，或点一件做成菜进货架。不消耗货架成品。</p>
+        <p class="rest-mute">点选同档两件 merge，或点一件做成菜写入该类当前菜单。材料只属饭 / 菜 / 酒。</p>
       </div>
     </header>
 
@@ -99,7 +99,7 @@ function doPreferCook(): void {
           :class="[qualityClass(item.quality), { on: selected.includes(item.id) }]"
           @click="toggleSlot(item.id)"
         >
-          <DishMark :kind="item.kind" :stars="starCount(item.quality)" />
+          <DishMark :mark="item.kind" :stars="starCount(item.quality)" />
           <strong>{{ item.kind }}</strong>
           <small>{{ item.quality }}</small>
         </button>
@@ -121,15 +121,16 @@ function doPreferCook(): void {
       <h4>厨师偏好</h4>
       <div class="bias-row">
         <button
-          v-for="kind in DISH_KINDS"
-          :key="kind"
+          v-for="cat in MENU_CATS"
+          :key="cat"
           type="button"
           class="bias-btn"
-          @click="store.preferDish(kind)"
+          :class="{ on: game.restaurant.chefWeight[cat] > 1 }"
+          @click="store.preferDish(cat)"
         >
-          <DishMark :kind="kind" />
-          {{ kind }}
-          <strong>{{ game.restaurant.chefWeight[kind] }}</strong>
+          <DishMark :mark="cat" />
+          {{ cat }}
+          <strong>{{ game.restaurant.chefWeight[cat] }}</strong>
         </button>
       </div>
     </section>
@@ -289,5 +290,9 @@ function doPreferCook(): void {
 
 .bias-btn :deep(.stars) {
   display: none;
+}
+
+.bias-btn.on {
+  background: var(--gloss), #ffe56a;
 }
 </style>

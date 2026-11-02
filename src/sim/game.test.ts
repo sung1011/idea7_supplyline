@@ -2,8 +2,8 @@ import { reactive } from 'vue'
 import { describe, expect, it } from 'vitest'
 import {
   BASE_HEAL_PER_SEC,
-  DISH_KINDS,
   EAT_PER_SEC,
+  EAT_WINE_PER_SEC,
   EXPAND_BED_COST,
   EXPAND_TABLE_COST,
   HUNGER_STAMINA,
@@ -162,7 +162,7 @@ describe('餐厅闭环', () => {
     expect(unit).toBeTruthy()
     expect(unit?.location).toBe('restaurant_seat')
     expect(unit?.stamina).toBe(HUNGER_STAMINA)
-    expect(unit?.order).toBe(DISH_KINDS[0])
+    expect(unit?.order).toBe('baiFan')
     expect(unit?.served).toBe(false)
     tick(state, 3)
     expect(unit?.stamina).toBe(HUNGER_STAMINA)
@@ -188,29 +188,28 @@ describe('餐厅闭环', () => {
     expect(queued?.served).toBe(false)
   })
 
-  it('上菜消耗对应货架库存', () => {
+  it('上菜消耗对应菜单库存', () => {
     const state = createInitialState()
     starveAndSendToRestaurant(state)
     const unit = findUnit(state, state.restaurant.tables[0]!)
-    const dish = unit!.order!
-    expect(state.restaurant.shelf[dish]).toBe(INITIAL_SHELF_PER_DISH)
+    expect(unit?.order).toBe('baiFan')
+    expect(state.restaurant.menu.饭.stock).toBe(INITIAL_SHELF_PER_DISH)
     expect(serveDish(state, unit!.id)).toBe(true)
-    expect(state.restaurant.shelf[dish]).toBe(INITIAL_SHELF_PER_DISH - 1)
+    expect(state.restaurant.menu.饭.stock).toBe(INITIAL_SHELF_PER_DISH - 1)
     expect(serveDish(state, unit!.id)).toBe(false)
   })
 
-  it('空货架不能上菜', () => {
+  it('空库存不能上菜', () => {
     const state = createInitialState()
     starveAndSendToRestaurant(state)
     const unit = findUnit(state, state.restaurant.tables[0]!)
-    const dish = unit!.order!
-    state.restaurant.shelf[dish] = 0
+    state.restaurant.menu.饭.stock = 0
     expect(serveDish(state, unit!.id)).toBe(false)
     expect(unit?.served).toBe(false)
     tick(state, 4)
     expect(unit?.stamina).toBe(HUNGER_STAMINA)
     restockShelf(state)
-    expect(state.restaurant.shelf[dish]).toBe(RESTOCK_PER_DISH)
+    expect(state.restaurant.menu.饭.stock).toBe(RESTOCK_PER_DISH)
     expect(serveDish(state, unit!.id)).toBe(true)
   })
 
@@ -228,7 +227,7 @@ describe('餐厅闭环', () => {
     expect(seated?.served).toBe(false)
     const next = findUnit(state, queuedId)
     expect(next?.location).toBe('restaurant_seat')
-    expect(next?.order).toBe(DISH_KINDS[1])
+    expect(next?.order).toBe('huiGuoRou')
     expect(next?.served).toBe(false)
     expect(state.restaurant.tables.includes(queuedId)).toBe(true)
     expect(state.restaurant.queue.includes(queuedId)).toBe(false)
@@ -244,7 +243,33 @@ describe('餐厅闭环', () => {
     expect(state.restaurant.tables.includes(queuedId)).toBe(true)
     const unit = findUnit(state, queuedId)
     expect(unit?.location).toBe('restaurant_seat')
-    expect(unit?.order).toBe(DISH_KINDS[1])
+    expect(unit?.order).toBe('huiGuoRou')
+  })
+
+  it('点餐按饭菜酒轮询当前上架菜', () => {
+    const state = createInitialState()
+    starveMany(state, 1)
+    expect(findUnit(state, state.restaurant.tables[0]!)?.order).toBe('baiFan')
+    serveDish(state, state.restaurant.tables[0]!)
+    tick(state, UNIT_MAX_STAMINA / EAT_PER_SEC + 1)
+    starveAndSendToRestaurant(state)
+    expect(findUnit(state, state.restaurant.tables[0]!)?.order).toBe('huiGuoRou')
+    serveDish(state, state.restaurant.tables[0]!)
+    tick(state, UNIT_MAX_STAMINA / EAT_PER_SEC + 1)
+    starveAndSendToRestaurant(state)
+    expect(findUnit(state, state.restaurant.tables[0]!)?.order).toBe('zhuoJiu')
+  })
+
+  it('酒类回体略快，三类都只回体力', () => {
+    const state = createInitialState()
+    state.restaurant.nextDishIndex = 2
+    starveAndSendToRestaurant(state)
+    const unit = findUnit(state, state.restaurant.tables[0]!)
+    expect(unit?.order).toBe('zhuoJiu')
+    expect(serveDish(state, unit!.id)).toBe(true)
+    tick(state, 2)
+    expect(unit?.stamina).toBe(HUNGER_STAMINA + EAT_WINE_PER_SEC * 2)
+    expect(unit?.hp).toBe(UNIT_MAX_HP)
   })
 
   it('补给不够时扩桌失败', () => {

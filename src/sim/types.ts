@@ -8,17 +8,28 @@ export type UnitLocation =
   | 'captive'
   | 'persuading'
 
-export type DishKind = '粥' | '炒饭' | '烤肉'
+/** 菜单三类。材料 kind 只走这三轴。 */
+export type MenuCat = '饭' | '菜' | '酒'
+
+export type DishId = 'baiFan' | 'zhou' | 'huiGuoRou' | 'chaoQingCai' | 'zhuoJiu' | 'qingJiu'
+
+export type DishDef = {
+  id: DishId
+  name: string
+  cat: MenuCat
+}
 
 export type IngredientQuality = '粗料' | '好料' | '精品'
 
 export type Ingredient = {
   id: string
-  kind: DishKind
+  kind: MenuCat
   quality: IngredientQuality
 }
 
-export type ChefWeight = Record<DishKind, number>
+export type ChefWeight = Record<MenuCat, number>
+
+export type CatCount = Record<MenuCat, number>
 
 export type Rng = () => number
 
@@ -34,8 +45,8 @@ export type Unit = {
   location: UnitLocation
   /** 占床用药后回血 ×3，满血离院清除。 */
   potionBoost: boolean
-  /** 占座后点的菜；离座或未入座为 null。 */
-  order: DishKind | null
+  /** 占座后点的菜（当前上架 dishId）；离座或未入座为 null。 */
+  order: DishId | null
   /** 占座且已上菜后才开始进食。 */
   served: boolean
   /** 出征 / 劝降剩余秒；非进行中为 0。 */
@@ -44,14 +55,19 @@ export type Unit = {
   jobTotal: number
 }
 
-export type ShelfStock = Record<DishKind, number>
+export type MenuSlot = {
+  dishId: DishId
+  stock: number
+  star: number
+}
+
+export type MenuState = Record<MenuCat, MenuSlot>
 
 export type RestaurantState = {
   tables: (string | null)[]
   queue: string[]
-  shelf: ShelfStock
-  /** 货架上带星标的份数，不超过对应种类库存；不接战斗 buff。 */
-  shelfStar: ShelfStock
+  /** 三类菜单：每类当前上架一道。 */
+  menu: MenuState
   nextDishIndex: number
   /** 后厨材料栏，上限见 KITCHEN_SLOT_MAX。 */
   kitchen: Ingredient[]

@@ -1,26 +1,39 @@
 import {
-  DISH_KINDS,
   INGREDIENT_QUALITIES,
   INITIAL_KITCHEN_COUNT,
+  INITIAL_SHELF_PER_DISH,
   INITIAL_TABLE_COUNT,
   KITCHEN_SLOT_MAX,
+  MENU_CATS,
   OFFLINE_TICK_CAP_SEC,
   SAVE_KEY,
   SAVE_VERSION,
   UNIT_MAX_STAMINA,
 } from './config'
-import { createInitialState, createRestaurantState, createShelf, tick } from './game'
+import { createInitialState, createRestaurantState, tick } from './game'
 import { getGeneral, resolveGeneralId } from './generals'
-import { createChefWeight, createEmptyShelf, createInitialKitchen } from './kitchen'
+import { createChefWeight, createInitialKitchen } from './kitchen'
+import {
+  cloneMenu,
+  createMenu,
+  DEFAULT_DISH_BY_CAT,
+  getDish,
+  isDishId,
+  LEGACY_KIND_TO_CAT,
+  migrateLegacyKind,
+  migrateLegacyOrder,
+  takeNextMenuDish,
+} from './menu'
 import type {
   ChefWeight,
-  DishKind,
   GameState,
   Ingredient,
   IngredientQuality,
+  MenuCat,
+  MenuSlot,
+  MenuState,
   RestaurantState,
   SaveBlob,
-  ShelfStock,
   StorageLike,
   Unit,
   UnitLocation,
@@ -44,15 +57,13 @@ const FREE_LOCATIONS: ReadonlySet<UnitLocation> = new Set([
   'persuading',
 ])
 
-const DISH_SET: ReadonlySet<string> = new Set(DISH_KINDS)
 const QUALITY_SET: ReadonlySet<string> = new Set(INGREDIENT_QUALITIES)
 
 function cloneRestaurant(restaurant: RestaurantState): RestaurantState {
   return {
     tables: [...restaurant.tables],
     queue: [...restaurant.queue],
-    shelf: { ...restaurant.shelf },
-    shelfStar: { ...restaurant.shelfStar },
+    menu: cloneMenu(restaurant.menu),
     nextDishIndex: restaurant.nextDishIndex,
     kitchen: restaurant.kitchen.map((item) => ({ ...item })),
     nextIngredientId: restaurant.nextIngredientId,
@@ -72,10 +83,6 @@ export function serialize(state: GameState, savedAt: number): SaveBlob {
     nextUnitId: state.nextUnitId,
     restaurant: cloneRestaurant(state.restaurant),
   }
-}
-
-function isDishKind(value: unknown): value is DishKind {
-  return typeof value === 'string' && DISH_SET.has(value)
 }
 
 function isQuality(value: unknown): value is IngredientQuality {
@@ -106,7 +113,8 @@ function parseUnit(value: unknown): Unit | null {
   const maxStamina =
     finiteNumber(unit.maxStamina) && unit.maxStamina > 0 ? unit.maxStamina : UNIT_MAX_STAMINA
   const stamina = finiteNumber(unit.stamina) ? unit.stamina : maxStamina
-  const order = unit.order === null || unit.order === undefined ? null : isDishKind(unit.order) ? unit.order : null
+  const order =
+    unit.order === null || unit.order === undefined ? null : migrateLegacyOrder(unit.order)
   const served = typeof unit.served === 'boolean' ? unit.served : false
   const givenId = typeof unit.generalId === 'string' ? unit.generalId : undefined
   const generalId = resolveGeneralId(unit.name, givenId)
@@ -171,29 +179,73 @@ function parseSlots(
   return slots
 }
 
-function parseShelf(raw: unknown, fallback: () => ShelfStock): ShelfStock | null {
-  if (raw === undefined) return fallback()
+function parseNonNeg(value: unknown, fallback: number): number | null {
+  if (value === undefined) return fallback
+  if (!finiteNumber(value) || value < 0) return null
+  return value
+}
+
+function parseMenuSlot(raw: unknown, cat: MenuCat): MenuSlot | null {
   if (!raw || typeof raw !== 'object') return null
   const src = raw as Record<string, unknown>
-  const shelf = createEmptyShelf()
-  for (const kind of DISH_KINDS) {
-    const value = src[kind]
-    if (value === undefined) {
-      shelf[kind] = 0
-      continue
-    }
-    if (!finiteNumber(value) || value < 0) return null
-    shelf[kind] = value
+  if (!isDishId(src.dishId)) return null
+  if (getDish(src.dishId).cat !== cat) return null
+  const stock = parseNonNeg(src.stock, 0)
+  if (stock === null) return null
+  const star = parseNonNeg(src.star, 0)
+  if (star === null) return null
+  return {
+    dishId: src.dishId,
+    stock,
+    star: Math.min(star, stock),
   }
-  return shelf
+}
+
+function parseV5Menu(raw: unknown): MenuState | null {
+  if (!raw || typeof raw !== 'object') return null
+  const src = raw as Record<string, unknown>
+  const menu = createMenu(0)
+  for (const cat of MENU_CATS) {
+    const slot = parseMenuSlot(src[cat], cat)
+    if (!slot) return null
+    menu[cat] = slot
+  }
+  return menu
+}
+
+function migrateMenuFromLegacyShelf(shelfRaw: unknown, starRaw: unknown): MenuState | null {
+  if (shelfRaw === undefined) return createMenu()
+  if (!shelfRaw || typeof shelfRaw !== 'object') return null
+  const src = shelfRaw as Record<string, unknown>
+  const stars =
+    starRaw && typeof starRaw === 'object' ? (starRaw as Record<string, unknown>) : {}
+  const pairs: { cat: MenuCat; old: string }[] = [
+    { cat: '饭', old: '粥' },
+    { cat: '菜', old: '炒饭' },
+    { cat: '酒', old: '烤肉' },
+  ]
+  const menu = createMenu(0)
+  for (const { cat, old } of pairs) {
+    const stock = parseNonNeg(src[old], INITIAL_SHELF_PER_DISH)
+    if (stock === null) return null
+    const star = parseNonNeg(stars[old], 0)
+    if (star === null) return null
+    menu[cat] = {
+      dishId: DEFAULT_DISH_BY_CAT[cat],
+      stock,
+      star: Math.min(star, stock),
+    }
+  }
+  return menu
 }
 
 function parseIngredient(value: unknown): Ingredient | null {
   if (!value || typeof value !== 'object') return null
   const item = value as Record<string, unknown>
   if (typeof item.id !== 'string' || item.id.length === 0) return null
-  if (!isDishKind(item.kind) || !isQuality(item.quality)) return null
-  return { id: item.id, kind: item.kind, quality: item.quality }
+  const kind = migrateLegacyKind(item.kind)
+  if (!kind || !isQuality(item.quality)) return null
+  return { id: item.id, kind, quality: item.quality }
 }
 
 function parseKitchen(raw: unknown): Ingredient[] | null {
@@ -215,11 +267,12 @@ function parseChefWeight(raw: unknown): ChefWeight | null {
   if (!raw || typeof raw !== 'object') return null
   const src = raw as Record<string, unknown>
   const weights = createChefWeight()
-  for (const kind of DISH_KINDS) {
-    const value = src[kind]
+  for (const cat of MENU_CATS) {
+    const legacy = Object.entries(LEGACY_KIND_TO_CAT).find(([, value]) => value === cat)?.[0]
+    const value = src[cat] ?? (legacy ? src[legacy] : undefined)
     if (value === undefined) continue
     if (!finiteNumber(value) || value < 0) return null
-    weights[kind] = value
+    weights[cat] = value
   }
   return weights
 }
@@ -234,14 +287,6 @@ function nextIngredientIdFrom(kitchen: Ingredient[], raw: unknown): number {
     if (Number.isFinite(n)) max = Math.max(max, n)
   }
   return max + 1
-}
-
-function clampStars(shelf: ShelfStock, stars: ShelfStock): ShelfStock {
-  const next = { ...stars }
-  for (const kind of DISH_KINDS) {
-    if (next[kind] > shelf[kind]) next[kind] = shelf[kind]
-  }
-  return next
 }
 
 function parseRestaurant(
@@ -267,8 +312,7 @@ function parseRestaurant(
     return {
       tables,
       queue,
-      shelf: createShelf(),
-      shelfStar: createEmptyShelf(),
+      menu: createMenu(),
       nextDishIndex: 0,
       kitchen: createInitialKitchen(),
       nextIngredientId: INITIAL_KITCHEN_COUNT + 1,
@@ -282,10 +326,11 @@ function parseRestaurant(
   if (!tables) return null
   const queue = parseIdList(blob.queue, ids, occupied)
   if (!queue) return null
-  const shelf = parseShelf(blob.shelf, createShelf)
-  if (!shelf) return null
-  const shelfStarRaw = parseShelf(blob.shelfStar, createEmptyShelf)
-  if (!shelfStarRaw) return null
+  const menu =
+    blob.menu !== undefined
+      ? parseV5Menu(blob.menu)
+      : migrateMenuFromLegacyShelf(blob.shelf, blob.shelfStar)
+  if (!menu) return null
   const kitchen = parseKitchen(blob.kitchen)
   if (!kitchen) return null
   const chefWeight = parseChefWeight(blob.chefWeight)
@@ -295,8 +340,7 @@ function parseRestaurant(
   return {
     tables,
     queue,
-    shelf,
-    shelfStar: clampStars(shelf, shelfStarRaw),
+    menu,
     nextDishIndex,
     kitchen,
     nextIngredientId,
@@ -345,9 +389,7 @@ export function deserialize(raw: unknown): { state: GameState; savedAt: number }
       unit.order = null
       unit.served = false
     } else if (!unit.order) {
-      const kind = DISH_KINDS[restaurant.nextDishIndex % DISH_KINDS.length] ?? DISH_KINDS[0]
-      restaurant.nextDishIndex += 1
-      unit.order = kind
+      unit.order = takeNextMenuDish(restaurant)
       unit.served = false
     }
   }

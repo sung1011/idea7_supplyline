@@ -4,7 +4,7 @@ export const GAME_NAME = '补给线'
 export const GAME_TAGLINE = '为前线战士做后勤补给。'
 
 export const SAVE_KEY = 'idea7Supplyline'
-export const SAVE_VERSION = 4
+export const SAVE_VERSION = 5
 
 export const INITIAL_BED_COUNT = 2
 export const INITIAL_UNIT_COUNT = 4
@@ -22,16 +22,12 @@ export const EXPAND_TABLE_COST = 25
 export const UNIT_MAX_STAMINA = 100
 export const HUNGER_STAMINA = 0
 export const EAT_PER_SEC = 8
+/** 酒类略快回体；三类都只回体力。 */
+export const EAT_WINE_PER_SEC = 10
 
-export const DISH_KINDS = ['粥', '炒饭', '烤肉'] as const
+export const MENU_CATS = ['饭', '菜', '酒'] as const
 export const INITIAL_SHELF_PER_DISH = 2
 export const RESTOCK_PER_DISH = 2
-
-export const DISH_EMOJI = {
-  粥: '🥣',
-  炒饭: '🍚',
-  烤肉: '🍖',
-} as const
 
 export const INGREDIENT_QUALITIES = ['粗料', '好料', '精品'] as const
 export const KITCHEN_SLOT_MAX = 12

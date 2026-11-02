@@ -29,7 +29,7 @@ describe('存档', () => {
     expect(loaded?.state.units).not.toBe(state.units)
   })
 
-  it('存档 v4 往返保持餐厅、后厨与出征进度', () => {
+  it('存档 v5 往返保持餐厅菜单、后厨与出征进度', () => {
     const state = createInitialState()
     starveAndSendToRestaurant(state)
     starveAndSendToRestaurant(state)
@@ -41,7 +41,7 @@ describe('存档', () => {
     tick(state, 1)
     const blob = serialize(state, 1_700_000_000_111)
     expect(blob.version).toBe(SAVE_VERSION)
-    expect(blob.version).toBe(4)
+    expect(blob.version).toBe(5)
     const loaded = deserialize(blob)
     expect(loaded).not.toBeNull()
     expect(loaded?.savedAt).toBe(1_700_000_000_111)
@@ -49,7 +49,7 @@ describe('存档', () => {
     expect(loaded?.state.units.some((unit) => unit.location === 'marching')).toBe(true)
     expect(loaded?.state.units.every((unit) => unit.generalId.length > 0)).toBe(true)
     expect(loaded?.state.restaurant.tables).not.toBe(state.restaurant.tables)
-    expect(loaded?.state.restaurant.shelf).not.toBe(state.restaurant.shelf)
+    expect(loaded?.state.restaurant.menu).not.toBe(state.restaurant.menu)
     expect(loaded?.state.restaurant.kitchen).not.toBe(state.restaurant.kitchen)
     expect(loaded?.state.restaurant.chefWeight).not.toBe(state.restaurant.chefWeight)
   })
@@ -62,7 +62,7 @@ describe('存档', () => {
     saveGame(state, storage, 10_000)
     const loaded = loadGame(storage, 10_000)
     expect(loaded).toEqual(state)
-    expect(storage.getItem(SAVE_KEY)).toContain('"version":4')
+    expect(storage.getItem(SAVE_KEY)).toContain('"version":5')
   })
 
   it('v1 旧档缺字段时迁移餐厅与体力', () => {
@@ -96,12 +96,11 @@ describe('存档', () => {
     expect(loaded?.state.units[0]?.jobRemain).toBe(0)
     expect(loaded?.state.restaurant.tables).toHaveLength(INITIAL_TABLE_COUNT)
     expect(loaded?.state.restaurant.queue).toEqual([])
-    expect(loaded?.state.restaurant.shelf.粥).toBe(INITIAL_SHELF_PER_DISH)
-    expect(loaded?.state.restaurant.shelf.炒饭).toBe(INITIAL_SHELF_PER_DISH)
-    expect(loaded?.state.restaurant.shelf.烤肉).toBe(INITIAL_SHELF_PER_DISH)
+    expect(loaded?.state.restaurant.menu.饭).toEqual({ dishId: 'baiFan', stock: INITIAL_SHELF_PER_DISH, star: 0 })
+    expect(loaded?.state.restaurant.menu.菜.dishId).toBe('huiGuoRou')
+    expect(loaded?.state.restaurant.menu.酒.dishId).toBe('zhuoJiu')
     expect(loaded?.state.restaurant.kitchen).toHaveLength(INITIAL_KITCHEN_COUNT)
-    expect(loaded?.state.restaurant.chefWeight).toEqual({ 粥: 1, 炒饭: 1, 烤肉: 1 })
-    expect(loaded?.state.restaurant.shelfStar).toEqual({ 粥: 0, 炒饭: 0, 烤肉: 0 })
+    expect(loaded?.state.restaurant.chefWeight).toEqual({ 饭: 1, 菜: 1, 酒: 1 })
   })
 
   it('v2 旧档缺后厨字段时补材料栏与偏好', () => {
@@ -136,12 +135,64 @@ describe('存档', () => {
     }
     const loaded = deserialize(v2)
     expect(loaded).not.toBeNull()
-    expect(loaded?.state.restaurant.shelf).toEqual({ 粥: 1, 炒饭: 2, 烤肉: 3 })
+    expect(loaded?.state.restaurant.menu.饭).toEqual({ dishId: 'baiFan', stock: 1, star: 0 })
+    expect(loaded?.state.restaurant.menu.菜).toEqual({ dishId: 'huiGuoRou', stock: 2, star: 0 })
+    expect(loaded?.state.restaurant.menu.酒).toEqual({ dishId: 'zhuoJiu', stock: 3, star: 0 })
     expect(loaded?.state.restaurant.tables).toEqual(['u1'])
-    expect(loaded?.state.units[0]?.order).toBe('粥')
+    expect(loaded?.state.units[0]?.order).toBe('baiFan')
     expect(loaded?.state.restaurant.kitchen).toHaveLength(INITIAL_KITCHEN_COUNT)
-    expect(loaded?.state.restaurant.chefWeight).toEqual({ 粥: 1, 炒饭: 1, 烤肉: 1 })
+    expect(loaded?.state.restaurant.chefWeight).toEqual({ 饭: 1, 菜: 1, 酒: 1 })
     expect(loaded?.state.restaurant.nextIngredientId).toBe(INITIAL_KITCHEN_COUNT + 1)
+  })
+
+  it('v4 旧档货架与后厨迁到菜单三类', () => {
+    const v4 = {
+      version: 4,
+      savedAt: 35_000,
+      units: [
+        {
+          id: 'u1',
+          name: '刘备',
+          generalId: 'liubei',
+          hp: UNIT_MAX_HP,
+          maxHp: UNIT_MAX_HP,
+          stamina: 0,
+          maxStamina: UNIT_MAX_STAMINA,
+          location: 'restaurant_seat',
+          potionBoost: false,
+          order: '炒饭',
+          served: false,
+          jobRemain: 0,
+          jobTotal: 0,
+        },
+      ],
+      beds: [null, null],
+      queue: [],
+      potionCount: 3,
+      supply: 50,
+      nextUnitId: 2,
+      restaurant: {
+        tables: ['u1'],
+        queue: [],
+        shelf: { 粥: 4, 炒饭: 5, 烤肉: 6 },
+        shelfStar: { 粥: 1, 炒饭: 0, 烤肉: 2 },
+        nextDishIndex: 2,
+        kitchen: [
+          { id: 'm1', kind: '粥', quality: '粗料' },
+          { id: 'm2', kind: '烤肉', quality: '好料' },
+        ],
+        nextIngredientId: 3,
+        chefWeight: { 粥: 2, 炒饭: 1, 烤肉: 0 },
+      },
+    }
+    const loaded = deserialize(v4)
+    expect(loaded).not.toBeNull()
+    expect(loaded?.state.units[0]?.order).toBe('huiGuoRou')
+    expect(loaded?.state.restaurant.menu.饭).toEqual({ dishId: 'baiFan', stock: 4, star: 1 })
+    expect(loaded?.state.restaurant.menu.菜).toEqual({ dishId: 'huiGuoRou', stock: 5, star: 0 })
+    expect(loaded?.state.restaurant.menu.酒).toEqual({ dishId: 'zhuoJiu', stock: 6, star: 2 })
+    expect(loaded?.state.restaurant.kitchen.map((item) => item.kind)).toEqual(['饭', '酒'])
+    expect(loaded?.state.restaurant.chefWeight).toEqual({ 饭: 2, 菜: 1, 酒: 0 })
   })
 
   it('读档失败回落新档', () => {
@@ -162,6 +213,7 @@ describe('存档', () => {
     expect(deserialize({ version: 2 })).toBeNull()
     expect(deserialize({ version: 3 })).toBeNull()
     expect(deserialize({ version: 4 })).toBeNull()
+    expect(deserialize({ version: 5 })).toBeNull()
   })
 
   it('v3 旧档按昵称挂到名将表', () => {
